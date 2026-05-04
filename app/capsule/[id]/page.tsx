@@ -12,6 +12,7 @@ import { useCapsule, useBlocksUntilUnlock, useOpenCapsule, useWithdrawBnb, useRe
 import { truncateAddress } from '@/lib/utils/format'
 import CapsuleTimeline from '@/components/capsule/CapsuleTimeline'
 import OpenAnimation from '@/components/capsule/OpenAnimation'
+import CapsuleComments from '@/components/capsule/CapsuleComments'
 
 const SPRING = { type: 'spring' as const, stiffness: 100, damping: 20 }
 
@@ -77,6 +78,7 @@ export default function CapsulePage() {
   const [showAnimation, setShowAnimation] = useState(false)
   const [contentError, setContentError] = useState<string | null>(null)
   const [createdAtTimestamp, setCreatedAtTimestamp] = useState<number>(0)
+  const [withdrawnAtTimestamp, setWithdrawnAtTimestamp] = useState<number>(0)
   const publicClient = usePublicClient()
 
   const isOpened = capsule ? capsule.isOpened : false
@@ -84,6 +86,7 @@ export default function CapsulePage() {
   const contentHash = capsule ? capsule.contentHash : ''
   const bnbAmount = capsule ? capsule.bnbAmount : BigInt(0)
   const bnbWithdrawn = capsule ? capsule.bnbWithdrawn : false
+  const withdrawnAt = capsule ? capsule.withdrawnAt : BigInt(0)
   const creator = capsule ? capsule.creator : ''
   const isCreator = currentAddress && creator && currentAddress.toLowerCase() === creator.toLowerCase()
   const hasBnb = bnbAmount > BigInt(0)
@@ -97,6 +100,15 @@ export default function CapsulePage() {
       setCreatedAtTimestamp(Number(block.timestamp))
     }).catch(() => {})
   }, [capsule, publicClient])
+
+  // Fetch block timestamp for withdrawnAt
+  useEffect(() => {
+    if (!capsule || !publicClient) return
+    if (!bnbWithdrawn || withdrawnAt === BigInt(0)) return
+    publicClient.getBlock({ blockNumber: withdrawnAt }).then((block) => {
+      setWithdrawnAtTimestamp(Number(block.timestamp))
+    }).catch(() => {})
+  }, [capsule, publicClient, bnbWithdrawn, withdrawnAt])
 
   // Fetch content from IPFS when capsule is opened
   const fetchContent = useCallback(async (cid: string) => {
@@ -205,8 +217,13 @@ export default function CapsulePage() {
 
         <div className="mb-8">
           <h1 className="text-2xl font-medium text-zinc-100 tracking-tight mb-1">
-            胶囊 #{capsule.id.toString()}
+            {capsule.title || `胶囊 #${capsule.id.toString()}`}
           </h1>
+          {capsule.title && (
+            <p className="text-xs text-zinc-700 font-mono mb-1">
+              胶囊 #{capsule.id.toString()}
+            </p>
+          )}
           <p className="text-sm text-zinc-600 font-mono">
             {truncateAddress(creator)}
           </p>
@@ -216,6 +233,8 @@ export default function CapsulePage() {
         <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-6 mb-8">
           <div className="flex flex-col gap-0">
             <InfoRow label="创建者" value={truncateAddress(creator)} mono />
+            <Divider />
+            <InfoRow label="标题" value={capsule.title || '--'} />
             <Divider />
             <InfoRow label="创建时间" value={formatDate(createdAtTimestamp)} />
             <Divider />
@@ -243,7 +262,9 @@ export default function CapsulePage() {
                       {bnbValue.toFixed(4)} BNB
                     </span>
                     {bnbWithdrawn && (
-                      <span className="text-[10px] text-zinc-600 ml-1">已提取</span>
+                      <span className="text-[10px] text-emerald-500 ml-1">
+                        BNB 已领取{withdrawnAtTimestamp > 0 ? ` · ${formatDate(withdrawnAtTimestamp)}` : ''}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -407,6 +428,9 @@ export default function CapsulePage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Comments */}
+        <CapsuleComments capsuleId={Number(capsuleId)} />
       </motion.div>
     </main>
   )

@@ -7,6 +7,7 @@ import { Coin } from '@phosphor-icons/react'
 interface CapsuleCardProps {
   id: number
   creator: string
+  title: string
   contentPreview: string
   unlockBlock: number
   isOpened: boolean
@@ -32,6 +33,7 @@ function BlockCountdown({ unlockBlock }: { unlockBlock: number }) {
 export default function CapsuleCard({
   id,
   creator,
+  title,
   contentPreview,
   unlockBlock,
   isOpened,
@@ -71,6 +73,13 @@ export default function CapsuleCard({
               </span>
             )}
           </div>
+
+          {/* Title */}
+          {title && (
+            <p className="text-sm text-zinc-100 font-medium mb-1 line-clamp-1">
+              {title}
+            </p>
+          )}
 
           {/* Content preview */}
           <p className="text-sm text-zinc-300 leading-relaxed mb-4 line-clamp-3">

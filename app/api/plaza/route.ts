@@ -10,7 +10,7 @@ const client = createPublicClient({
 })
 
 const capsuleCreatedEvent = parseAbiItem(
-  'event CapsuleCreated(uint256 indexed id, address indexed creator, string contentHash, uint256 unlockBlock, uint256 bnbAmount, bool isPublic, address recipient)'
+  'event CapsuleCreated(uint256 indexed id, address indexed creator, string title, string contentHash, uint256 unlockBlock, uint256 bnbAmount, bool isPublic, address recipient)'
 )
 
 async function fetchContentPreview(cid: string): Promise<string> {
@@ -63,13 +63,14 @@ export async function GET(request: NextRequest) {
     const allCapsules = []
 
     for (const log of logs) {
-      const { id, creator, contentHash, unlockBlock, bnbAmount, isPublic, recipient } = log.args
+      const { id, creator, title, contentHash, unlockBlock, bnbAmount, isPublic, recipient } = log.args
 
       if (!isPublic) continue
 
       allCapsules.push({
         id: Number(id),
         creator: creator as string,
+        title: title as string,
         contentHash: contentHash as string,
         unlockBlock: Number(unlockBlock),
         bnbAmount: formatEther(bnbAmount || BigInt(0)),

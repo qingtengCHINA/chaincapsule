@@ -15,6 +15,7 @@ export default function CapsuleForm() {
   const { create, hash, capsuleId, isPending, isConfirming, isSuccess, error: contractError } = useCreateCapsule()
   const { data: blockNumber } = useBlockNumber()
 
+  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [unlockDate, setUnlockDate] = useState('')
   const [unlockTime, setUnlockTime] = useState('')
@@ -31,6 +32,12 @@ export default function CapsuleForm() {
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {}
+
+    if (!title.trim()) {
+      newErrors.title = '请输入胶囊标题'
+    } else if (title.length > 100) {
+      newErrors.title = '标题不能超过100个字符'
+    }
 
     if (!content.trim()) {
       newErrors.content = '请输入胶囊内容'
@@ -93,7 +100,7 @@ export default function CapsuleForm() {
       const unlockBlock = dateToUnlockBlock(unlockDateTime, currentBlock)
 
       // Step 3: Call contract (this triggers wallet popup)
-      create(cid, BigInt(unlockBlock), isPublic, bnbAmount, recipient || undefined)
+      create(title.trim(), cid, BigInt(unlockBlock), isPublic, bnbAmount, recipient || undefined)
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '提交失败，请重试' })
     } finally {
@@ -109,6 +116,10 @@ export default function CapsuleForm() {
       <div className="flex flex-col items-center gap-4 py-12">
         <CheckCircle size={48} className="text-emerald-400" weight="light" />
         <p className="text-lg text-zinc-100">胶囊创建成功</p>
+
+        {title.trim() && (
+          <p className="text-base text-zinc-300 font-medium">{title.trim()}</p>
+        )}
 
         {capsuleId !== undefined && (
           <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-5 py-4 text-center max-w-sm">
@@ -166,6 +177,24 @@ export default function CapsuleForm() {
           </p>
         </div>
       )}
+
+      {/* Title */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm text-zinc-400">胶囊标题</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="给你的胶囊起个名字..."
+          maxLength={100}
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+          disabled={isDisabled}
+        />
+        {errors.title && <p className="text-sm text-red-400">{errors.title}</p>}
+        <p className="text-xs text-zinc-600">标题会公开显示在广场上，不会被加密</p>
+      </div>
+
+      <div className="border-t border-zinc-800" />
 
       {/* Content */}
       <div className="flex flex-col gap-2">

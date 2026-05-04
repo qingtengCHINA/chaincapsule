@@ -10,7 +10,7 @@ const client = createPublicClient({
 })
 
 const capsuleCreatedEvent = parseAbiItem(
-  'event CapsuleCreated(uint256 indexed id, address indexed creator, string contentHash, uint256 unlockBlock, uint256 bnbAmount, bool isPublic, address recipient)'
+  'event CapsuleCreated(uint256 indexed id, address indexed creator, string title, string contentHash, uint256 unlockBlock, uint256 bnbAmount, bool isPublic, address recipient)'
 )
 
 export async function GET(request: Request) {

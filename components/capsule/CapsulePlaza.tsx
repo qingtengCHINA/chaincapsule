@@ -8,6 +8,7 @@ import CapsuleCard from './CapsuleCard'
 interface CapsuleData {
   id: number
   creator: string
+  title: string
   contentHash: string
   unlockBlock: number
   createdAt: number
@@ -134,6 +135,7 @@ export default function CapsulePlaza() {
           <CapsuleCard
             id={capsule.id}
             creator={capsule.creator}
+            title={capsule.title}
             contentPreview={capsule.contentPreview || ''}
             unlockBlock={capsule.unlockBlock}
             isOpened={capsule.isOpened}

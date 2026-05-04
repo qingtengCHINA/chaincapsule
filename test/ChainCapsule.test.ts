@@ -12,7 +12,6 @@ describe("ChainCapsule", function () {
     return { capsule, owner, creator, recipient, stranger };
   }
 
-  // Helper: mine N blocks
   async function mineBlocks(n: number) {
     for (let i = 0; i < n; i++) {
       await ethers.provider.send("evm_mine", []);
@@ -22,16 +21,18 @@ describe("ChainCapsule", function () {
   describe("createCapsule", function () {
     it("creates a capsule with correct data", async function () {
       const { capsule, creator, recipient } = await loadFixture(deployFixture);
+      const title = "给未来的信";
       const contentHash = "QmTestHash123456789";
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
       const bnbAmount = ethers.parseEther("0.1");
 
       await expect(
-        capsule.connect(creator).createCapsule(contentHash, unlockBlock, true, recipient.address, { value: bnbAmount })
+        capsule.connect(creator).createCapsule(title, contentHash, unlockBlock, true, recipient.address, { value: bnbAmount })
       ).to.emit(capsule, "CapsuleCreated");
 
       const c = await capsule.getCapsule(1);
       expect(c.creator).to.equal(creator.address);
+      expect(c.title).to.equal(title);
       expect(c.contentHash).to.equal(contentHash);
       expect(c.unlockBlock).to.equal(unlockBlock);
       expect(c.bnbAmount).to.equal(bnbAmount);
@@ -45,10 +46,19 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress);
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress);
 
       const c = await capsule.getCapsule(1);
       expect(c.bnbAmount).to.equal(0);
+    });
+
+    it("fails with empty title", async function () {
+      const { capsule, creator } = await loadFixture(deployFixture);
+      const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
+
+      await expect(
+        capsule.connect(creator).createCapsule("", "QmHash", unlockBlock, false, ethers.ZeroAddress)
+      ).to.be.revertedWithCustomError(capsule, "InvalidTitle");
     });
 
     it("fails with empty content hash", async function () {
@@ -56,7 +66,7 @@ describe("ChainCapsule", function () {
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
 
       await expect(
-        capsule.connect(creator).createCapsule("", unlockBlock, false, ethers.ZeroAddress)
+        capsule.connect(creator).createCapsule("标题", "", unlockBlock, false, ethers.ZeroAddress)
       ).to.be.revertedWithCustomError(capsule, "InvalidContent");
     });
 
@@ -65,8 +75,19 @@ describe("ChainCapsule", function () {
       const currentBlock = await ethers.provider.getBlockNumber();
 
       await expect(
-        capsule.connect(creator).createCapsule("QmHash", currentBlock, false, ethers.ZeroAddress)
+        capsule.connect(creator).createCapsule("标题", "QmHash", currentBlock, false, ethers.ZeroAddress)
       ).to.be.revertedWithCustomError(capsule, "InvalidUnlockBlock");
+    });
+
+    it("fails with BNB amount too high", async function () {
+      const { capsule, creator } = await loadFixture(deployFixture);
+      const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
+
+      await expect(
+        capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
+          value: ethers.parseEther("1001"),
+        })
+      ).to.be.revertedWithCustomError(capsule, "BnbAmountTooHigh");
     });
   });
 
@@ -75,7 +96,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
 
       await expect(capsule.connect(creator).openCapsule(1)).to.be.revertedWithCustomError(
         capsule,
@@ -88,7 +109,7 @@ describe("ChainCapsule", function () {
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
       const bnbAmount = ethers.parseEther("0.5");
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: bnbAmount,
       });
 
@@ -104,7 +125,7 @@ describe("ChainCapsule", function () {
       expect(c.isOpened).to.equal(true);
       expect(c.openedAt).to.be.greaterThan(0);
 
-      // BNB should NOT be transferred on open — only content is revealed
+      // BNB should NOT be transferred on open
       expect(balanceAfter + gasCost - balanceBefore).to.equal(0n);
     });
 
@@ -112,7 +133,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
 
       await mineBlocks(10);
       await capsule.connect(creator).openCapsule(1);
@@ -127,17 +148,15 @@ describe("ChainCapsule", function () {
       const { capsule, creator, recipient, stranger } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, recipient.address, { value: 0 });
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, recipient.address, { value: 0 });
 
       await mineBlocks(10);
 
-      // Stranger cannot open
       await expect(capsule.connect(stranger).openCapsule(1)).to.be.revertedWithCustomError(
         capsule,
         "NotAuthorized"
       );
 
-      // Recipient can open
       await expect(capsule.connect(recipient).openCapsule(1)).to.emit(capsule, "CapsuleOpened");
     });
 
@@ -146,10 +165,9 @@ describe("ChainCapsule", function () {
       const currentBlock = await ethers.provider.getBlockNumber();
       const unlockBlock = currentBlock + 50;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
 
       const remaining = await capsule.getBlocksUntilUnlock(1);
-      // createCapsule tx mines one more block, so remaining is 49
       expect(remaining).to.equal(49);
     });
   });
@@ -159,7 +177,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: ethers.parseEther("1"),
       });
 
@@ -174,7 +192,7 @@ describe("ChainCapsule", function () {
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
       const bnbAmount = ethers.parseEther("1");
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: bnbAmount,
       });
 
@@ -191,13 +209,14 @@ describe("ChainCapsule", function () {
 
       const c = await capsule.getCapsule(1);
       expect(c.bnbWithdrawn).to.equal(true);
+      expect(c.withdrawnAt).to.be.greaterThan(0);
     });
 
     it("fails if no BNB attached", async function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
 
       await mineBlocks(10);
       await capsule.connect(creator).openCapsule(1);
@@ -212,7 +231,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: ethers.parseEther("0.5"),
       });
 
@@ -231,7 +250,7 @@ describe("ChainCapsule", function () {
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
       const bnbAmount = ethers.parseEther("0.3");
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, recipient.address, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, recipient.address, {
         value: bnbAmount,
       });
 
@@ -251,7 +270,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator, recipient, stranger } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, recipient.address, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, recipient.address, {
         value: ethers.parseEther("0.5"),
       });
 
@@ -270,7 +289,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: ethers.parseEther("1"),
       });
 
@@ -286,7 +305,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator, stranger } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: ethers.parseEther("1"),
       });
 
@@ -302,7 +321,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, {
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, {
         value: ethers.parseEther("0.1"),
       });
 
@@ -314,7 +333,7 @@ describe("ChainCapsule", function () {
       const { capsule, creator } = await loadFixture(deployFixture);
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 10;
 
-      await capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
+      await capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 });
 
       const reclaimBlock = await capsule.getReclaimBlock(1);
       expect(reclaimBlock).to.equal(0);
@@ -329,13 +348,13 @@ describe("ChainCapsule", function () {
 
       const unlockBlock = (await ethers.provider.getBlockNumber()) + 100;
       await expect(
-        capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 })
+        capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 })
       ).to.be.revertedWithCustomError(capsule, "EnforcedPause");
 
       await capsule.connect(owner).unpause();
 
       await expect(
-        capsule.connect(creator).createCapsule("QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 })
+        capsule.connect(creator).createCapsule("标题", "QmHash", unlockBlock, false, ethers.ZeroAddress, { value: 0 })
       ).to.emit(capsule, "CapsuleCreated");
     });
   });
