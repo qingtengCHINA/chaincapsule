@@ -11,6 +11,11 @@ export const CHAIN_CAPSULE_ABI = [
   },
   {
     "inputs": [],
+    "name": "BnbAmountTooHigh",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "CapsuleAlreadyOpened",
     "type": "error"
   },
@@ -154,6 +159,13 @@ export const CHAIN_CAPSULE_ABI = [
     ],
     "name": "Unpaused",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_BNB_PER_CAPSULE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
