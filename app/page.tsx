@@ -12,7 +12,7 @@ const stagger = {
     y: 0,
     transition: {
       delay: i * 0.12,
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 120,
       damping: 20,
     },
