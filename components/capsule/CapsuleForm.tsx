@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useAccount, useBlockNumber } from 'wagmi'
+import { useAccount, useBlockNumber, useChainId } from 'wagmi'
 import { useCreateCapsule } from '@/lib/contracts/hooks'
+import { getContractAddress } from '@/lib/contracts/addresses'
 import { dateToUnlockBlock } from '@/lib/utils/blockTime'
 import { CheckCircle, Spinner, Lock, Eye, EyeSlash, CurrencyCircleDollar } from '@phosphor-icons/react'
 
 export default function CapsuleForm() {
   const { isConnected } = useAccount()
-  const { create, hash, capsuleId, isPending, isConfirming, isSuccess } = useCreateCapsule()
+  const chainId = useChainId()
+  const { create, hash, capsuleId, isPending, isConfirming, isSuccess, error: contractError } = useCreateCapsule()
   const { data: blockNumber } = useBlockNumber()
 
   const [content, setContent] = useState('')
@@ -19,6 +21,10 @@ export default function CapsuleForm() {
   const [bnbAmount, setBnbAmount] = useState('0')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isUploading, setIsUploading] = useState(false)
+
+  // Check if contract is deployed on current network
+  const contractAddr = getContractAddress(chainId)
+  const wrongNetwork = !contractAddr
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {}
@@ -48,9 +54,17 @@ export default function CapsuleForm() {
     e.preventDefault()
     if (!validate()) return
 
+    // Pre-check: contract address
+    if (wrongNetwork) {
+      setErrors({ submit: '当前网络不支持，请切换到 BSC Testnet (Chain ID 97)' })
+      return
+    }
+
     setIsUploading(true)
+    setErrors({})
+
     try {
-      // Upload content to IPFS via Pinata
+      // Step 1: Upload content to IPFS
       const response = await fetch('/api/ipfs/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,23 +72,28 @@ export default function CapsuleForm() {
       })
 
       if (!response.ok) {
-        throw new Error('上传到IPFS失败')
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || '上传到IPFS失败')
       }
 
-      const { cid } = await response.json()
+      const { cid, warning } = await response.json()
 
-      // Calculate unlock block
+      // Step 2: Calculate unlock block
       const unlockDateTime = new Date(`${unlockDate}T${unlockTime || '00:00'}`)
       const currentBlock = blockNumber ? Number(blockNumber) : 40000000
       const unlockBlock = dateToUnlockBlock(unlockDateTime, currentBlock)
 
+      // Step 3: Call contract (this triggers wallet popup)
       create(cid, BigInt(unlockBlock), isPublic, bnbAmount)
     } catch (err) {
-      setErrors({ submit: err instanceof Error ? err.message : '提交失败' })
+      setErrors({ submit: err instanceof Error ? err.message : '提交失败，请重试' })
     } finally {
       setIsUploading(false)
     }
   }
+
+  // Show contract errors
+  const displayError = errors.submit || (contractError?.message?.includes('UserRejected') ? '用户取消了交易' : contractError?.message)
 
   if (isSuccess) {
     return (
@@ -110,6 +129,15 @@ export default function CapsuleForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {/* Wrong network warning */}
+      {wrongNetwork && isConnected && (
+        <div className="rounded-lg border border-red-800/40 bg-red-950/20 px-4 py-3">
+          <p className="text-sm text-red-400">
+            ⚠️ 当前网络不支持。请在钱包中切换到 <strong>BSC Testnet</strong>（Chain ID 97）
+          </p>
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex flex-col gap-2">
         <label className="text-sm text-zinc-400">胶囊内容</label>
@@ -214,13 +242,13 @@ export default function CapsuleForm() {
 
       {/* Submit */}
       <div className="flex flex-col gap-3">
-        {errors.submit && (
-          <p className="text-sm text-red-400">{errors.submit}</p>
+        {displayError && (
+          <p className="text-sm text-red-400">{displayError}</p>
         )}
 
         <button
           type="submit"
-          disabled={!isConnected || isDisabled}
+          disabled={!isConnected || isDisabled || wrongNetwork}
           className="w-full flex items-center justify-center gap-2 bg-zinc-100 text-zinc-950 font-medium rounded-lg px-6 py-3 hover:bg-white transition-colors active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isUploading ? (
@@ -236,12 +264,12 @@ export default function CapsuleForm() {
           ) : isPending ? (
             <>
               <Spinner size={18} className="animate-spin" />
-              <span>签名中...</span>
+              <span>请在钱包中确认...</span>
             </>
           ) : (
             <>
               <Lock size={18} weight="light" />
-              <span>{isConnected ? '封存胶囊' : '请先连接钱包'}</span>
+              <span>{isConnected ? (wrongNetwork ? '请切换到 BSC Testnet' : '封存胶囊') : '请先连接钱包'}</span>
             </>
           )}
         </button>
