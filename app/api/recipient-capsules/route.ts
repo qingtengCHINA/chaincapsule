@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     }
 
     const currentBlock = await client.getBlockNumber()
-    const fromBlock = currentBlock > 50000n ? currentBlock - 50000n : 0n
+    const fromBlock = currentBlock > BigInt(50000) ? currentBlock - BigInt(50000) : BigInt(0)
 
     const logs = await client.getLogs({
       address: CONTRACT_ADDRESS,
