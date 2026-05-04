@@ -362,7 +362,7 @@ export default function CapsulePage() {
                       Time Capsule
                     </p>
                     <p className="text-xs text-zinc-700">
-                      {formatDate(capsule.createdAt)}
+                      {formatDate(createdAtTimestamp)}
                     </p>
                   </div>
                 </div>
@@ -408,6 +408,7 @@ export default function CapsulePage() {
                 isOpened={isOpened}
                 onOpen={handleOpen}
                 isPending={isOpenPending}
+                createdAtBlock={Number(capsule.createdAt)}
               />
 
               <AnimatePresence>

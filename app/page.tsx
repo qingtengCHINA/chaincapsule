@@ -83,6 +83,7 @@ function CapsuleMini({ capsuleId }: { capsuleId: bigint }) {
         <span className="text-sm font-mono text-zinc-500 group-hover:text-zinc-300 transition-colors">
           #{capsuleId.toString()}
         </span>
+        {capsule.title && <span className="text-xs text-zinc-400 truncate max-w-[120px]">{capsule.title}</span>}
         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${color}`}>
           {status}
         </span>

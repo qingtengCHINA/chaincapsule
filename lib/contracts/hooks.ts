@@ -24,7 +24,6 @@ export function useCreateCapsule() {
         })
         if (decoded.eventName === 'CapsuleCreated') {
           capsuleId = decoded.args.id as bigint
-          const eventTitle = decoded.args.title as string
           break
         }
       } catch {}

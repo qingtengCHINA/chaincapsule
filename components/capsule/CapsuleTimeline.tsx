@@ -12,6 +12,7 @@ interface CapsuleTimelineProps {
   isOpened: boolean
   onOpen: () => void
   isPending?: boolean
+  createdAtBlock?: number
 }
 
 export default function CapsuleTimeline({
@@ -19,11 +20,16 @@ export default function CapsuleTimeline({
   isOpened,
   onOpen,
   isPending = false,
+  createdAtBlock,
 }: CapsuleTimelineProps) {
   const { data: currentBlock } = useBlockNumber({ watch: true })
   const current = currentBlock ? Number(currentBlock) : 0
   const blocksRemaining = unlockBlock - current
   const isUnlocked = blocksRemaining <= 0
+
+  const totalBlocks = createdAtBlock ? unlockBlock - createdAtBlock : 1
+  const elapsed = createdAtBlock ? current - createdAtBlock : 0
+  const progress = totalBlocks > 0 ? Math.min(100, Math.max(2, (elapsed / totalBlocks) * 100)) : 0
 
   const totalSeconds = Math.max(0, blocksRemaining * BSC_BLOCK_TIME_SECONDS)
   const days = Math.floor(totalSeconds / 86400)
@@ -65,7 +71,7 @@ export default function CapsuleTimeline({
                 <motion.div
                   className="h-full rounded-full bg-zinc-600"
                   initial={{ width: '0%' }}
-                  animate={{ width: `${unlockBlock > 0 ? Math.min(100, Math.max(2, ((current) / unlockBlock) * 100)) : 0}%` }}
+                  animate={{ width: `${unlockBlock > 0 ? progress : 0}%` }}
                   transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                 />
               </div>

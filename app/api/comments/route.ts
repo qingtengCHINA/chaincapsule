@@ -1,6 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
+// In-memory rate limiter for comments
+const commentRateLimitMap = new Map<string, { count: number; resetTime: number }>()
+const COMMENT_RATE_LIMIT_MAX = 5 // 5 comments per IP per minute
+const COMMENT_RATE_LIMIT_WINDOW_MS = 60 * 1000
+
+setInterval(() => {
+  const now = Date.now()
+  commentRateLimitMap.forEach((value, key) => {
+    if (now > value.resetTime) commentRateLimitMap.delete(key)
+  })
+}, 5 * 60 * 1000)
+
+function checkCommentRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = commentRateLimitMap.get(ip)
+  if (!entry || now > entry.resetTime) {
+    commentRateLimitMap.set(ip, { count: 1, resetTime: now + COMMENT_RATE_LIMIT_WINDOW_MS })
+    return true
+  }
+  if (entry.count >= COMMENT_RATE_LIMIT_MAX) return false
+  entry.count++
+  return true
+}
+
 // GET: fetch comments for a capsule
 export async function GET(request: NextRequest) {
   try {
@@ -33,6 +57,10 @@ export async function GET(request: NextRequest) {
 // POST: create a new comment
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    if (!checkCommentRateLimit(ip)) {
+      return NextResponse.json({ error: '评论过于频繁，请稍后再试' }, { status: 429 })
+    }
     const body = await request.json()
     const { capsuleId, walletAddress, content } = body
 
