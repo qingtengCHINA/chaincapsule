@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useAccount } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatEther } from 'viem'
+import { usePublicClient } from 'wagmi'
 import { Coin, ArrowLeft, Wallet, Clock, CheckCircle } from '@phosphor-icons/react'
 import Link from 'next/link'
 import { useCapsule, useBlocksUntilUnlock, useOpenCapsule, useWithdrawBnb, useReclaimBnb, useReclaimBlock } from '@/lib/contracts/hooks'
@@ -75,6 +76,8 @@ export default function CapsulePage() {
   const [isFetchingContent, setIsFetchingContent] = useState(false)
   const [showAnimation, setShowAnimation] = useState(false)
   const [contentError, setContentError] = useState<string | null>(null)
+  const [createdAtTimestamp, setCreatedAtTimestamp] = useState<number>(0)
+  const publicClient = usePublicClient()
 
   const isOpened = capsule ? capsule.isOpened : false
   const unlockBlock = capsule ? Number(capsule.unlockBlock) : 0
@@ -84,6 +87,16 @@ export default function CapsulePage() {
   const creator = capsule ? capsule.creator : ''
   const isCreator = currentAddress && creator && currentAddress.toLowerCase() === creator.toLowerCase()
   const hasBnb = bnbAmount > BigInt(0)
+
+  // Fetch block timestamp for createdAt (createdAt is a block number, not a timestamp)
+  useEffect(() => {
+    if (!capsule || !publicClient) return
+    const blockNum = capsule.createdAt
+    if (!blockNum || blockNum === BigInt(0)) return
+    publicClient.getBlock({ blockNumber: blockNum }).then((block) => {
+      setCreatedAtTimestamp(Number(block.timestamp))
+    }).catch(() => {})
+  }, [capsule, publicClient])
 
   // Fetch content from IPFS when capsule is opened
   const fetchContent = useCallback(async (cid: string) => {
@@ -204,7 +217,7 @@ export default function CapsulePage() {
           <div className="flex flex-col gap-0">
             <InfoRow label="创建者" value={truncateAddress(creator)} mono />
             <Divider />
-            <InfoRow label="创建时间" value={formatDate(capsule.createdAt)} />
+            <InfoRow label="创建时间" value={formatDate(createdAtTimestamp)} />
             <Divider />
             <InfoRow label="解锁区块" value={`#${unlockBlock.toLocaleString()}`} mono />
             <Divider />
