@@ -1,0 +1,43 @@
+{
+  "name": "chaincapsule",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "compile": "npx hardhat compile",
+    "test:contracts": "npx hardhat test",
+    "deploy:local": "npx hardhat run scripts/deploy.ts --network localhost"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "*",
+    "@supabase/ssr": "*",
+    "@supabase/supabase-js": "*",
+    "@tanstack/react-query": "*",
+    "framer-motion": "*",
+    "next": "^15.5.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "viem": "*",
+    "wagmi": "*",
+    "zustand": "*"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "*",
+    "@nomicfoundation/hardhat-toolbox": "*",
+    "@openzeppelin/contracts": "*",
+    "@tailwindcss/postcss": "*",
+    "@types/node": "*",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "dotenv": "*",
+    "eslint": "*",
+    "eslint-config-next": "*",
+    "hardhat": "*",
+    "postcss": "*",
+    "tailwindcss": "*",
+    "typescript": "*"
+  }
+}
