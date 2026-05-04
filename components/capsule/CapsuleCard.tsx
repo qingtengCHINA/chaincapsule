@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { formatEther } from 'viem'
 import { Coin } from '@phosphor-icons/react'
 
 interface CapsuleCardProps {
@@ -38,7 +37,7 @@ export default function CapsuleCard({
   isOpened,
   bnbAmount,
 }: CapsuleCardProps) {
-  const bnbValue = bnbAmount ? parseFloat(formatEther(BigInt(bnbAmount))) : 0
+  const bnbValue = bnbAmount ? parseFloat(bnbAmount) : 0
 
   return (
     <motion.div
