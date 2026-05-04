@@ -211,7 +211,7 @@ export default function Home() {
                   {[
                     { label: '链上永久存储', value: '∞' },
                     { label: 'BNB Chain 低 Gas', value: '~$0.03' },
-                    { label: '隐私加密', value: 'E2E' },
+                    { label: '去中心化存储', value: 'IPFS' },
                   ].map((stat) => (
                     <div key={stat.label}>
                       <div className="text-xl font-semibold text-white" style={{ fontFamily: 'var(--font-en)' }}>{stat.value}</div>

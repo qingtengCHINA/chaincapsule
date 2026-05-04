@@ -9,6 +9,7 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     // ─── Constants ────────────────────────────────────────────────
     uint256 public constant RECLAIM_DELAY = 365 days;
     uint256 public constant MAX_CONTENT_LENGTH = 10000;
+    uint256 public constant MAX_BNB_PER_CAPSULE = 1000 ether;
 
     // ─── Structs ────────────────────────────────────────────────────
     struct Capsule {
@@ -51,6 +52,7 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     error NotAuthorized();
     error InvalidContent();
     error InvalidUnlockBlock();
+    error BnbAmountTooHigh();
     error NoBnbToWithdraw();
     error BnbAlreadyWithdrawn();
     error ReclaimNotReady();
@@ -78,6 +80,9 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
         }
         if (unlockBlock <= block.number) {
             revert InvalidUnlockBlock();
+        }
+        if (msg.value > MAX_BNB_PER_CAPSULE) {
+            revert BnbAmountTooHigh();
         }
 
         id = _nextId++;

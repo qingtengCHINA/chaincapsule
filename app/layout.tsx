@@ -4,6 +4,7 @@ import "./globals.css";
 import WalletProvider from "@/components/wallet/WalletProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -21,7 +22,22 @@ const notoSansSC = Noto_Sans_SC({
 
 export const metadata: Metadata = {
   title: "ChainCapsule — 链上时光胶囊",
-  description: "把你的话，封存在区块里，留给未来。",
+  description: "把你的话，封存在区块里，留给未来。BNB Smart Chain 上的去中心化时光胶囊 dApp。",
+  keywords: ["ChainCapsule", "时光胶囊", "time capsule", "blockchain", "BNB", "dApp", "Web3"],
+  openGraph: {
+    title: "ChainCapsule — 链上时光胶囊",
+    description: "把你的话，封存在区块里，留给未来。",
+    url: "https://chaincapsule.vercel.app",
+    siteName: "ChainCapsule",
+    type: "website",
+    locale: "zh_CN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ChainCapsule — 链上时光胶囊",
+    description: "把你的话，封存在区块里，留给未来。",
+  },
+  metadataBase: new URL("https://chaincapsule.vercel.app"),
 };
 
 export default function RootLayout({
@@ -32,6 +48,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="dark">
       <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         {/* Fix wallet extension conflicts — must run before any extension injects */}
         <script
           dangerouslySetInnerHTML={{
@@ -62,7 +79,9 @@ export default function RootLayout({
         <WalletProvider>
           <Navbar />
           <div className="pt-14">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
           <Footer />
         </WalletProvider>

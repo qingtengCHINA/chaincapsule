@@ -6,7 +6,8 @@ import { useAccount, useBlockNumber, useChainId } from 'wagmi'
 import { useCreateCapsule } from '@/lib/contracts/hooks'
 import { getContractAddress } from '@/lib/contracts/addresses'
 import { dateToUnlockBlock } from '@/lib/utils/blockTime'
-import { CheckCircle, Spinner, Lock, Eye, EyeSlash, CurrencyCircleDollar } from '@phosphor-icons/react'
+import { isAddress } from 'viem'
+import { CheckCircle, Spinner, Lock, Eye, EyeSlash, CurrencyCircleDollar, Copy, Check } from '@phosphor-icons/react'
 
 export default function CapsuleForm() {
   const { isConnected } = useAccount()
@@ -22,6 +23,7 @@ export default function CapsuleForm() {
   const [recipient, setRecipient] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isUploading, setIsUploading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   // Check if contract is deployed on current network
   const contractAddr = getContractAddress(chainId)
@@ -45,6 +47,12 @@ export default function CapsuleForm() {
 
     if (parseFloat(bnbAmount) < 0) {
       newErrors.bnbAmount = '金额不能为负数'
+    } else if (parseFloat(bnbAmount) > 1000) {
+      newErrors.bnbAmount = '金额不能超过 1000 BNB'
+    }
+
+    if (recipient && !isAddress(recipient)) {
+      newErrors.recipient = '请输入有效的以太坊地址'
     }
 
     setErrors(newErrors)
@@ -105,7 +113,27 @@ export default function CapsuleForm() {
         {capsuleId !== undefined && (
           <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-5 py-4 text-center max-w-sm">
             <p className="text-sm text-amber-400 font-medium mb-2">⚠️ 请记下你的胶囊 ID</p>
-            <p className="text-2xl font-bold font-mono text-amber-300 mb-2">#{capsuleId.toString()}</p>
+            <p className="text-2xl font-bold font-mono text-amber-300 mb-2">
+              #{capsuleId.toString()}
+              <button
+                type="button"
+                onClick={() => {
+                  const id = capsuleId.toString()
+                  navigator.clipboard.writeText(id)
+                  const existing = JSON.parse(localStorage.getItem('chaincapsule_ids') || '[]')
+                  if (!existing.includes(id)) {
+                    existing.push(id)
+                    localStorage.setItem('chaincapsule_ids', JSON.stringify(existing))
+                  }
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                }}
+                className="ml-2 inline-flex items-center gap-1 text-xs text-amber-500 hover:text-amber-300 transition-colors align-middle"
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? '已复制' : '复制 ID'}
+              </button>
+            </p>
             <p className="text-xs text-zinc-500 leading-relaxed">
               你需要这个 ID 来在 BSCScan 上直接操作合约。<br/>
               建议截图保存或记在本地。
@@ -226,6 +254,7 @@ export default function CapsuleForm() {
             type="number"
             step="0.001"
             min="0"
+            max="1000"
             value={bnbAmount}
             onChange={(e) => setBnbAmount(e.target.value)}
             placeholder="0"
@@ -254,6 +283,9 @@ export default function CapsuleForm() {
           className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 font-mono text-sm placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
           disabled={isDisabled}
         />
+        {errors.recipient && (
+          <p className="text-sm text-red-400">{errors.recipient}</p>
+        )}
         <p className="text-xs text-zinc-600">指定的钱包地址也可以打开胶囊并领取 BNB。不填则只有你能操作。</p>
       </div>
 

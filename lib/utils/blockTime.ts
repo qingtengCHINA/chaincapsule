@@ -1,4 +1,6 @@
-const BSC_BLOCK_TIME_SECONDS = 0.45
+// BSC average block time is ~3 seconds (not 0.45!)
+// See: https://bscscan.com/chart/blocktime
+const BSC_BLOCK_TIME_SECONDS = 3
 
 export function dateToUnlockBlock(date: Date, currentBlock: number): number {
   const now = Date.now()

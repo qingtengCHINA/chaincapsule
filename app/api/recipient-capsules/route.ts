@@ -18,7 +18,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const address = searchParams.get('address')
 
-    if (!address || !CONTRACT_ADDRESS || CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
+      return NextResponse.json({ error: '无效的地址格式' }, { status: 400 })
+    }
+
+    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000') {
       return NextResponse.json({ capsuleIds: [] })
     }
 

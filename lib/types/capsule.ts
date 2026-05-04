@@ -1,35 +1,36 @@
-export interface Capsule {
+/**
+ * Shared type definitions for ChainCapsule data.
+ */
+
+/** Represents the on-chain + off-chain state of a single time capsule. */
+export interface CapsuleData {
+  /** Unique on-chain capsule identifier. */
   id: number
+
+  /** Wallet address of the capsule creator. */
   creator: string
+
+  /** IPFS / content-hash stored on chain for the encrypted payload. */
   contentHash: string
+
+  /** Block number at which the capsule becomes unlockable. */
   unlockBlock: number
-  createdAt: number
+
+  /** Optional Unix-timestamp (seconds) when the capsule was created off-chain. */
+  createdAt?: number
+
+  /** BNB deposited with the capsule (as a string to avoid precision loss). */
   bnbAmount: string
+
+  /** Whether the capsule has already been opened / claimed. */
   isOpened: boolean
+
+  /** Whether the capsule is publicly visible or recipient-only. */
   isPublic: boolean
+
+  /** Address of the intended recipient (or creator address for self-capsules). */
   recipient: string
-}
 
-export interface CapsuleMetadata {
-  id: number
-  creator_address: string
-  recipient_address: string | null
-  content_hash: string | null
-  unlock_block: number
-  created_at_chain: string
-  bnb_amount_wei: string
-  is_opened: boolean
-  is_public: boolean
-  content_preview: string
-  metadata: Record<string, unknown>
-  updated_at: string
-}
-
-export interface Profile {
-  wallet_address: string
-  display_name: string | null
-  avatar_url: string | null
-  bio: string
-  capsule_count: number
-  created_at: string
+  /** Optional short plaintext preview of the encrypted content. */
+  contentPreview?: string
 }

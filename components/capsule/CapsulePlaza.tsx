@@ -15,6 +15,7 @@ interface CapsuleData {
   isOpened: boolean
   isPublic: boolean
   recipient: string
+  contentPreview?: string
 }
 
 const container = {
@@ -133,7 +134,7 @@ export default function CapsulePlaza() {
           <CapsuleCard
             id={capsule.id}
             creator={capsule.creator}
-            contentPreview=""
+            contentPreview={capsule.contentPreview || ''}
             unlockBlock={capsule.unlockBlock}
             isOpened={capsule.isOpened}
             bnbAmount={capsule.bnbAmount}

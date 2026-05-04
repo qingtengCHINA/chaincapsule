@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import ConnectButton from '@/components/wallet/ConnectButton'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { List, X } from '@phosphor-icons/react'
 
 const links = [
   { href: '/', label: '首页' },
@@ -22,6 +24,7 @@ function GitHubIcon() {
 
 export default function Navbar() {
   const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.04] bg-[#060608]/80 backdrop-blur-xl">
@@ -39,7 +42,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Nav links */}
+        {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-1">
           {links.map((link) => {
             const isActive = pathname === link.href
@@ -62,21 +65,76 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Right: GitHub + Connect */}
+        {/* Right: GitHub + Connect + Mobile menu */}
         <div className="flex items-center gap-2">
           <a
             href="https://github.com/qingtengCHINA/chaincapsule"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors"
+            className="hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors"
             title="Open Source · View on GitHub"
           >
             <GitHubIcon />
-            <span className="hidden sm:inline">Open Source</span>
+            <span className="hidden lg:inline">Open Source</span>
           </a>
           <ConnectButton />
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <X size={20} className="text-zinc-400" />
+            ) : (
+              <List size={20} className="text-zinc-400" />
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden border-t border-white/[0.04] bg-[#060608]/95 backdrop-blur-xl"
+          >
+            <div className="px-6 py-3 space-y-1">
+              {links.map((link) => {
+                const isActive = pathname === link.href
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`block px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                      isActive
+                        ? 'text-zinc-100 bg-white/[0.06]'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              })}
+              <a
+                href="https://github.com/qingtengCHINA/chaincapsule"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03] transition-colors"
+              >
+                <GitHubIcon />
+                GitHub
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   )
 }

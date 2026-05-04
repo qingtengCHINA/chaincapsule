@@ -1,7 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// In-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+const RATE_LIMIT_MAX = 10
+const RATE_LIMIT_WINDOW_MS = 60 * 1000 // 1 minute
+
+// Clean up expired entries every 5 minutes
+setInterval(() => {
+  const now = Date.now()
+  rateLimitMap.forEach((value, key) => {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key)
+    }
+  })
+}, 5 * 60 * 1000)
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS })
+    return true
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false
+  }
+
+  entry.count++
+  return true
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: '请求过于频繁，请稍后再试' },
+        { status: 429 }
+      )
+    }
+
     const { content } = await request.json()
 
     if (!content || typeof content !== 'string') {

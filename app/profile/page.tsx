@@ -10,6 +10,7 @@ import { truncateAddress } from '@/lib/utils/format'
 import ConnectButton from '@/components/wallet/ConnectButton'
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 }
+const CONTRACT_ADDRESS_TESTNET = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || ''
 
 type TabKey = 'all' | 'locked' | 'unlocked'
 
@@ -26,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '合约地址在哪？',
-    a: 'BSC Testnet: 0xc9b1Fa78E1eFB25674444abD761a9a23a4Ab38Ea。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。',
+    a: `BSC Testnet: ${CONTRACT_ADDRESS_TESTNET || '未部署'}。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。`,
   },
   {
     q: '胶囊 ID 是什么？是密码吗？',

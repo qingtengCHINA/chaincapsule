@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useBlockNumber } from 'wagmi'
 import { formatCountdown } from '@/lib/utils/blockTime'
 
-const BSC_BLOCK_TIME_SECONDS = 0.45
+// Must match lib/utils/blockTime.ts — BSC ~3s per block
+const BSC_BLOCK_TIME_SECONDS = 3
 
 interface CapsuleTimelineProps {
   unlockBlock: number
@@ -64,7 +65,7 @@ export default function CapsuleTimeline({
                 <motion.div
                   className="h-full rounded-full bg-zinc-600"
                   initial={{ width: '0%' }}
-                  animate={{ width: `${Math.min(100, Math.max(0, 50))}%` }}
+                  animate={{ width: `${unlockBlock > 0 ? Math.min(100, Math.max(2, ((current) / unlockBlock) * 100)) : 0}%` }}
                   transition={{ type: 'spring', stiffness: 100, damping: 20 }}
                 />
               </div>
