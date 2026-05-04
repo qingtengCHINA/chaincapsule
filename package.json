@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "compile": "npx hardhat compile",
-    "test:contracts": "npx hardhat test",
-    "deploy:local": "npx hardhat run scripts/deploy.ts --network localhost"
+    "compile": "TS_NODE_PROJECT=tsconfig.hardhat.json npx hardhat compile",
+    "test:contracts": "TS_NODE_PROJECT=tsconfig.hardhat.json npx hardhat test",
+    "deploy:local": "TS_NODE_PROJECT=tsconfig.hardhat.json npx hardhat run scripts/deploy.ts --network localhost"
   },
   "dependencies": {
     "@phosphor-icons/react": "*",
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "*",
-    "@nomicfoundation/hardhat-toolbox": "*",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
     "@openzeppelin/contracts": "*",
     "@tailwindcss/postcss": "*",
     "@types/node": "*",
@@ -35,7 +35,7 @@
     "dotenv": "*",
     "eslint": "*",
     "eslint-config-next": "*",
-    "hardhat": "*",
+    "hardhat": "^2.28.6",
     "postcss": "*",
     "tailwindcss": "*",
     "typescript": "*"
