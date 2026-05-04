@@ -19,6 +19,7 @@ export default function CapsuleForm() {
   const [unlockTime, setUnlockTime] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [bnbAmount, setBnbAmount] = useState('0')
+  const [recipient, setRecipient] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isUploading, setIsUploading] = useState(false)
 
@@ -84,7 +85,7 @@ export default function CapsuleForm() {
       const unlockBlock = dateToUnlockBlock(unlockDateTime, currentBlock)
 
       // Step 3: Call contract (this triggers wallet popup)
-      create(cid, BigInt(unlockBlock), isPublic, bnbAmount)
+      create(cid, BigInt(unlockBlock), isPublic, bnbAmount, recipient || undefined)
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '提交失败，请重试' })
     } finally {
@@ -236,6 +237,24 @@ export default function CapsuleForm() {
           <p className="text-sm text-red-400">{errors.bnbAmount}</p>
         )}
         <p className="text-xs text-zinc-600">可向胶囊中存入BNB，开胶囊后需手动提取</p>
+      </div>
+
+      <div className="border-t border-zinc-800" />
+
+      {/* Recipient Address */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm text-zinc-400">
+          指定领取人（可选）
+        </label>
+        <input
+          type="text"
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value)}
+          placeholder="0x... 留空则仅自己可领取"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 font-mono text-sm placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+          disabled={isDisabled}
+        />
+        <p className="text-xs text-zinc-600">指定的钱包地址也可以打开胶囊并领取 BNB。不填则只有你能操作。</p>
       </div>
 
       <div className="border-t border-zinc-800" />

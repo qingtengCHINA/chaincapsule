@@ -30,16 +30,19 @@ export function useCreateCapsule() {
     }
   }
 
-  function create(contentHash: string, unlockBlock: bigint, isPublic: boolean, bnbAmount: string) {
+  function create(contentHash: string, unlockBlock: bigint, isPublic: boolean, bnbAmount: string, recipient?: string) {
     const address = getContractAddress(chainId)
     if (!address) throw new Error('合约尚未部署到当前网络，请切换到 BSC Testnet')
     const value = bnbAmount && parseFloat(bnbAmount) > 0 ? parseEther(bnbAmount) : BigInt(0)
+    const recipientAddr = recipient && recipient.startsWith('0x') && recipient.length === 42
+      ? recipient as `0x${string}`
+      : '0x0000000000000000000000000000000000000000'
 
     writeContract({
       address,
       abi: CHAIN_CAPSULE_ABI,
       functionName: 'createCapsule',
-      args: [contentHash, unlockBlock, isPublic, '0x0000000000000000000000000000000000000000'],
+      args: [contentHash, unlockBlock, isPublic, recipientAddr],
       value,
     })
   }

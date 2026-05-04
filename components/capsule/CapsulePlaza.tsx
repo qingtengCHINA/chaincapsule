@@ -3,16 +3,18 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import CapsuleCard from './CapsuleCard'
 
 interface CapsuleData {
   id: number
-  creator_address: string
-  content_preview: string
-  unlock_block: number
-  is_opened: boolean
-  bnb_amount_wei: string
+  creator: string
+  contentHash: string
+  unlockBlock: number
+  createdAt: number
+  bnbAmount: string
+  isOpened: boolean
+  isPublic: boolean
+  recipient: string
 }
 
 const container = {
@@ -74,27 +76,15 @@ export default function CapsulePlaza() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!supabaseUrl || !supabaseKey) {
-      setLoading(false)
-      return
-    }
-
-    const supabase = createClient()
-
-    supabase
-      .from('capsules')
-      .select('id, creator_address, content_preview, unlock_block, is_opened, bnb_amount_wei')
-      .eq('is_public', true)
-      .order('created_at_chain', { ascending: false })
-      .limit(50)
-      .then(({ data, error: fetchError }) => {
-        if (fetchError) {
-          setError(fetchError.message)
-        } else {
-          setCapsules(data || [])
-        }
+    fetch('/api/plaza')
+      .then((res) => res.json())
+      .then((data) => {
+        setCapsules(data.capsules || [])
+        if (data.error) setError(data.error)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError('加载失败')
         setLoading(false)
       })
   }, [])
@@ -110,7 +100,7 @@ export default function CapsulePlaza() {
   if (error) {
     return (
       <div className="mt-8 text-center">
-        <p className="text-sm text-zinc-500">加载失败: {error}</p>
+        <p className="text-sm text-zinc-500">{error}</p>
       </div>
     )
   }
@@ -123,12 +113,7 @@ export default function CapsulePlaza() {
         </p>
         <Link
           href="/create"
-          className="
-            inline-block px-5 py-2 text-sm rounded-lg
-            border border-zinc-700 text-zinc-300
-            hover:bg-zinc-800 hover:border-zinc-600
-            transition-colors
-          "
+          className="inline-block px-5 py-2 text-sm rounded-lg border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-600 transition-colors"
         >
           创建胶囊
         </Link>
@@ -147,11 +132,11 @@ export default function CapsulePlaza() {
         <motion.div key={capsule.id} variants={item}>
           <CapsuleCard
             id={capsule.id}
-            creator={capsule.creator_address}
-            contentPreview={capsule.content_preview}
-            unlockBlock={capsule.unlock_block}
-            isOpened={capsule.is_opened}
-            bnbAmount={capsule.bnb_amount_wei}
+            creator={capsule.creator}
+            contentPreview=""
+            unlockBlock={capsule.unlockBlock}
+            isOpened={capsule.isOpened}
+            bnbAmount={capsule.bnbAmount}
           />
         </motion.div>
       ))}

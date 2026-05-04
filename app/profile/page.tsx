@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAccount } from 'wagmi'
@@ -229,6 +229,16 @@ export default function ProfilePage() {
   const { address, isConnected } = useAccount()
   const { data: capsuleIds, isLoading } = useUserCapsules(address)
   const [activeTab, setActiveTab] = useState<TabKey>('all')
+  const [recipientIds, setRecipientIds] = useState<number[]>([])
+
+  // Fetch capsules where user is recipient
+  useEffect(() => {
+    if (!address) return
+    fetch(`/api/recipient-capsules?address=${address}`)
+      .then(res => res.json())
+      .then(data => setRecipientIds(data.capsuleIds || []))
+      .catch(() => {})
+  }, [address])
 
   if (!isConnected || !address) {
     return (
@@ -326,6 +336,25 @@ export default function ProfilePage() {
           )}
         </motion.div>
       </div>
+
+      {/* Recipient capsules */}
+      {recipientIds.length > 0 && (
+        <div className="mx-auto max-w-2xl px-4 pb-8">
+          <div className="border-t border-zinc-800/40 pt-8">
+            <h2 className="text-lg font-medium tracking-tight text-zinc-300 mb-4">
+              指定给我的胶囊
+            </h2>
+            <p className="text-xs text-zinc-600 mb-4">
+              别人指定你为领取人，你也可以打开这些胶囊并领取 BNB
+            </p>
+            <div className="flex flex-col gap-2">
+              {recipientIds.map((id) => (
+                <CapsuleRow key={id} capsuleId={BigInt(id)} tab="all" />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FAQ */}
       <FAQSection />
