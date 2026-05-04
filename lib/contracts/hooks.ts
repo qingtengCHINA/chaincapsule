@@ -1,5 +1,5 @@
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
-import { parseEther } from 'viem'
+import { parseEther, decodeEventLog } from 'viem'
 import { getContractAddress } from './addresses'
 import { CHAIN_CAPSULE_ABI } from './abi'
 import { useChainId } from 'wagmi'
@@ -8,9 +8,27 @@ export function useCreateCapsule() {
   const chainId = useChainId()
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract()
 
-  const { isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({
+  const { data: receipt, isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({
     hash,
   })
+
+  // Extract capsule ID from CapsuleCreated event
+  let capsuleId: bigint | undefined
+  if (receipt) {
+    for (const log of receipt.logs) {
+      try {
+        const decoded = decodeEventLog({
+          abi: CHAIN_CAPSULE_ABI,
+          data: log.data,
+          topics: log.topics,
+        })
+        if (decoded.eventName === 'CapsuleCreated') {
+          capsuleId = decoded.args.id as bigint
+          break
+        }
+      } catch {}
+    }
+  }
 
   function create(contentHash: string, unlockBlock: bigint, isPublic: boolean, bnbAmount: string) {
     const address = getContractAddress(chainId)
@@ -29,6 +47,7 @@ export function useCreateCapsule() {
   return {
     create,
     hash,
+    capsuleId,
     isPending,
     isConfirming,
     isSuccess,

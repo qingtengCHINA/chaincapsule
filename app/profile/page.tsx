@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAccount } from 'wagmi'
-import { Wallet, Plus } from '@phosphor-icons/react'
+import { Wallet, Plus, CaretDown } from '@phosphor-icons/react'
 import { useUserCapsules, useCapsule, useBlocksUntilUnlock } from '@/lib/contracts/hooks'
 import { truncateAddress } from '@/lib/utils/format'
 import ConnectButton from '@/components/wallet/ConnectButton'
@@ -18,6 +18,71 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'locked', label: '未解锁' },
   { key: 'unlocked', label: '已解锁' },
 ]
+
+const FAQ_ITEMS = [
+  {
+    q: '网站没了，我的 BNB 还能取出来吗？',
+    a: '能。合约部署在 BNB Smart Chain 区块链上，跟网站完全独立。网站只是个"遥控器"，合约才是"保险箱"。你可以直接去 BSCScan 操作：打开 testnet.bscscan.com → 搜索合约地址 → Contract → Write Contract → 连接钱包 → 调用 withdrawBnb(id) 或 reclaimBnb(id)。',
+  },
+  {
+    q: '合约地址在哪？',
+    a: 'BSC Testnet: 0xc9b1Fa78E1eFB25674444abD761a9a23a4Ab38Ea。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。',
+  },
+  {
+    q: '胶囊 ID 是什么？是密码吗？',
+    a: '不是密码。胶囊 ID 是链上的编号（1, 2, 3...），用于定位你的胶囊。任何人都能用 ID 查看公开胶囊的信息，但只有你的钱包签名才能开胶囊和提 BNB。安全靠的是你的钱包私钥，不是 ID。但你仍然需要记住 ID 来操作你的胶囊。',
+  },
+  {
+    q: '创建胶囊后要注意什么？',
+    a: '请务必记下你的胶囊 ID（创建成功后会显示）。虽然你的钱包地址关联了所有胶囊，但直接通过 BSCScan 操作时需要输入 ID。建议截图保存或记在本地。',
+  },
+  {
+    q: 'BNB 附加功能安全吗？',
+    a: '合约使用了 OpenZeppelin 的 ReentrancyGuard 防重入攻击，withdrawBnb 和 reclaimBnb 都有 nonReentrant 保护。BNB 锁在合约里，只有创建者或指定接收人能提取。如果长期无人提取（约 365 天），创建者可以回收。合约源码开源，可在 GitHub 和 BSCScan 上审查。',
+  },
+  {
+    q: '合约经过审计了吗？',
+    a: '目前合约使用了 OpenZeppelin 标准库（Ownable, ReentrancyGuard, Pausable），有 20 个单元测试覆盖。合约源码开源在 GitHub。对于小额使用已经足够安全。未来如果项目规模增大，会考虑专业审计。',
+  },
+]
+
+function FAQItem({ item, index }: { item: typeof FAQ_ITEMS[0]; index: number }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-zinc-800/40 last:border-b-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-4 text-left group"
+      >
+        <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors pr-4">
+          {item.q}
+        </span>
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex-shrink-0"
+        >
+          <CaretDown size={16} className="text-zinc-600" />
+        </motion.div>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <p className="text-sm text-zinc-500 leading-relaxed pb-4">
+              {item.a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
@@ -84,7 +149,6 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
   const isLocked = !isOpened && remaining > 0
   const isUnlocked = isOpened || (!isOpened && remaining <= 0)
 
-  // Filter based on active tab
   if (tab === 'locked' && !isLocked) return null
   if (tab === 'unlocked' && !isUnlocked) return null
 
@@ -102,20 +166,10 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
   }
 
   return (
-    <motion.div
-      whileHover={{ x: 2 }}
-      transition={SPRING}
-      layout
-    >
+    <motion.div whileHover={{ x: 2 }} transition={SPRING} layout>
       <Link
         href={`/capsule/${capsuleId}`}
-        className="
-          block rounded-lg border border-zinc-800/40 bg-zinc-900/30 p-4
-          transition-all duration-200
-          hover:border-zinc-700/60 hover:bg-zinc-900/50
-          active:scale-[0.98]
-          group
-        "
+        className="block rounded-lg border border-zinc-800/40 bg-zinc-900/30 p-4 transition-all duration-200 hover:border-zinc-700/60 hover:bg-zinc-900/50 active:scale-[0.98] group"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -126,20 +180,13 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
               {statusLabel}
             </span>
           </div>
-
           <div className="flex items-center gap-3">
             {!isOpened && (
               <span className="text-xs text-zinc-600 font-mono">
                 区块 #{unlockBlock.toLocaleString()}
               </span>
             )}
-            <svg
-              className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
+            <svg className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </div>
@@ -203,6 +250,9 @@ export default function ProfilePage() {
             <ConnectButton />
           </motion.div>
         </div>
+
+        {/* FAQ always visible */}
+        <FAQSection />
       </main>
     )
   }
@@ -240,14 +290,7 @@ export default function ProfilePage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`
-                  relative flex-1 px-4 py-2 text-sm rounded-md transition-colors
-                  active:scale-[0.98]
-                  ${activeTab === tab.key
-                    ? 'text-zinc-100'
-                    : 'text-zinc-500 hover:text-zinc-400'
-                  }
-                `}
+                className={`relative flex-1 px-4 py-2 text-sm rounded-md transition-colors active:scale-[0.98] ${activeTab === tab.key ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-400'}`}
               >
                 {activeTab === tab.key && (
                   <motion.div
@@ -283,6 +326,26 @@ export default function ProfilePage() {
           )}
         </motion.div>
       </div>
+
+      {/* FAQ */}
+      <FAQSection />
     </main>
+  )
+}
+
+function FAQSection() {
+  return (
+    <div className="mx-auto max-w-2xl px-4 pb-16">
+      <div className="border-t border-zinc-800/40 pt-12">
+        <h2 className="text-lg font-semibold tracking-tight text-zinc-200 mb-6">
+          常见问题
+        </h2>
+        <div className="rounded-xl border border-zinc-800/40 bg-zinc-900/20 px-5">
+          {FAQ_ITEMS.map((item, i) => (
+            <FAQItem key={i} item={item} index={i} />
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }

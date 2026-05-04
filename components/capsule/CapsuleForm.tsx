@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useAccount, useBlockNumber } from 'wagmi'
 import { useCreateCapsule } from '@/lib/contracts/hooks'
 import { dateToUnlockBlock } from '@/lib/utils/blockTime'
@@ -8,7 +9,7 @@ import { CheckCircle, Spinner, Lock, Eye, EyeSlash, CurrencyCircleDollar } from 
 
 export default function CapsuleForm() {
   const { isConnected } = useAccount()
-  const { create, isPending, isConfirming, isSuccess, hash } = useCreateCapsule()
+  const { create, hash, capsuleId, isPending, isConfirming, isSuccess } = useCreateCapsule()
   const { data: blockNumber } = useBlockNumber()
 
   const [content, setContent] = useState('')
@@ -80,9 +81,27 @@ export default function CapsuleForm() {
       <div className="flex flex-col items-center gap-4 py-12">
         <CheckCircle size={48} className="text-emerald-400" weight="light" />
         <p className="text-lg text-zinc-100">胶囊创建成功</p>
-        {hash && (
-          <p className="text-sm text-zinc-500 font-mono break-all">{hash}</p>
+
+        {capsuleId !== undefined && (
+          <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-5 py-4 text-center max-w-sm">
+            <p className="text-sm text-amber-400 font-medium mb-2">⚠️ 请记下你的胶囊 ID</p>
+            <p className="text-2xl font-bold font-mono text-amber-300 mb-2">#{capsuleId.toString()}</p>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              你需要这个 ID 来在 BSCScan 上直接操作合约。<br/>
+              建议截图保存或记在本地。
+            </p>
+          </div>
         )}
+
+        {hash && (
+          <p className="text-xs text-zinc-600 font-mono break-all">Tx: {hash}</p>
+        )}
+
+        <Link href="/profile">
+          <button className="mt-2 inline-flex items-center gap-2 rounded-full bg-white text-zinc-950 px-5 py-2.5 text-sm font-medium transition-transform active:scale-[0.98] hover:bg-zinc-200">
+            查看我的胶囊
+          </button>
+        </Link>
       </div>
     )
   }
