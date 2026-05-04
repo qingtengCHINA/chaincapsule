@@ -74,6 +74,13 @@ export default function CapsulePlaza() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseKey) {
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
 
     supabase

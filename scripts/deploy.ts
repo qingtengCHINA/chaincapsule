@@ -1,6 +1,7 @@
-import { ethers } from "hardhat";
+import hre from "hardhat";
 
 async function main() {
+  const { ethers } = hre;
   console.log("Deploying ChainCapsule...");
 
   const ChainCapsule = await ethers.getContractFactory("ChainCapsule");

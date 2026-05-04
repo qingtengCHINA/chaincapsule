@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { useAccount } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatEther } from 'viem'
-import { Coin, ArrowLeft } from '@phosphor-icons/react'
+import { Coin, ArrowLeft, Wallet, Clock, CheckCircle } from '@phosphor-icons/react'
 import Link from 'next/link'
-import { useCapsule, useBlocksUntilUnlock, useOpenCapsule } from '@/lib/contracts/hooks'
-import { truncateAddress, formatBNB } from '@/lib/utils/format'
+import { useCapsule, useBlocksUntilUnlock, useOpenCapsule, useWithdrawBnb, useReclaimBnb, useReclaimBlock } from '@/lib/contracts/hooks'
+import { truncateAddress } from '@/lib/utils/format'
 import CapsuleTimeline from '@/components/capsule/CapsuleTimeline'
 import OpenAnimation from '@/components/capsule/OpenAnimation'
 
@@ -27,16 +28,11 @@ function LoadingSkeleton() {
   return (
     <div className="w-full max-w-lg mx-auto px-4 py-12">
       <div className="flex flex-col gap-6">
-        {/* Back button skeleton */}
         <SkeletonBlock className="h-4 w-20" />
-
-        {/* Header */}
         <div className="flex flex-col gap-3">
           <SkeletonBlock className="h-8 w-48" />
           <SkeletonBlock className="h-4 w-32" />
         </div>
-
-        {/* Info cards */}
         <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-6 flex flex-col gap-4">
           <div className="flex justify-between">
             <SkeletonBlock className="h-4 w-16" />
@@ -47,18 +43,6 @@ function LoadingSkeleton() {
             <SkeletonBlock className="h-4 w-16" />
             <SkeletonBlock className="h-4 w-24" />
           </div>
-          <div className="border-t border-zinc-800/50" />
-          <div className="flex justify-between">
-            <SkeletonBlock className="h-4 w-16" />
-            <SkeletonBlock className="h-4 w-20" />
-          </div>
-        </div>
-
-        {/* Timeline skeleton */}
-        <div className="flex flex-col items-center gap-3 py-8">
-          <SkeletonBlock className="h-3 w-24" />
-          <SkeletonBlock className="h-7 w-40" />
-          <SkeletonBlock className="h-4 w-28" />
         </div>
       </div>
     </div>
@@ -78,10 +62,14 @@ function formatDate(timestamp: bigint | number): string {
 export default function CapsulePage() {
   const params = useParams()
   const capsuleId = params?.id ? BigInt(params.id as string) : BigInt(0)
+  const { address: currentAddress } = useAccount()
 
   const { data: capsule, isLoading, isError } = useCapsule(capsuleId)
   const { data: blocksUntilUnlock } = useBlocksUntilUnlock(capsuleId)
-  const { openCapsule, isPending, isSuccess } = useOpenCapsule()
+  const { data: reclaimBlock } = useReclaimBlock(capsuleId)
+  const { openCapsule, isPending: isOpenPending, isSuccess: isOpenSuccess } = useOpenCapsule()
+  const { withdrawBnb, isPending: isWithdrawPending, isSuccess: isWithdrawSuccess } = useWithdrawBnb()
+  const { reclaimBnb, isPending: isReclaimPending, isSuccess: isReclaimSuccess } = useReclaimBnb()
 
   const [content, setContent] = useState<string | null>(null)
   const [isFetchingContent, setIsFetchingContent] = useState(false)
@@ -91,6 +79,11 @@ export default function CapsulePage() {
   const isOpened = capsule ? capsule.isOpened : false
   const unlockBlock = capsule ? Number(capsule.unlockBlock) : 0
   const contentHash = capsule ? capsule.contentHash : ''
+  const bnbAmount = capsule ? capsule.bnbAmount : BigInt(0)
+  const bnbWithdrawn = capsule ? capsule.bnbWithdrawn : false
+  const creator = capsule ? capsule.creator : ''
+  const isCreator = currentAddress && creator && currentAddress.toLowerCase() === creator.toLowerCase()
+  const hasBnb = bnbAmount > BigInt(0)
 
   // Fetch content from IPFS when capsule is opened
   const fetchContent = useCallback(async (cid: string) => {
@@ -118,14 +111,13 @@ export default function CapsulePage() {
 
   // Handle openCapsule transaction success
   useEffect(() => {
-    if (isSuccess && contentHash) {
+    if (isOpenSuccess && contentHash) {
       fetchContent(contentHash)
     }
-  }, [isSuccess, contentHash, fetchContent])
+  }, [isOpenSuccess, contentHash, fetchContent])
 
   const handleOpen = () => {
     if (isOpened) {
-      // Already opened, just show content
       setShowAnimation(true)
       if (contentHash && !content) {
         fetchContent(contentHash)
@@ -137,12 +129,11 @@ export default function CapsulePage() {
 
   // Trigger animation when content is fetched after opening
   useEffect(() => {
-    if ((isSuccess || isOpened) && content && !showAnimation) {
+    if ((isOpenSuccess || isOpened) && content && !showAnimation) {
       setShowAnimation(true)
     }
-  }, [isSuccess, isOpened, content, showAnimation])
+  }, [isOpenSuccess, isOpened, content, showAnimation])
 
-  // Loading state
   if (isLoading) {
     return (
       <main className="min-h-[100dvh] bg-zinc-950">
@@ -151,7 +142,6 @@ export default function CapsulePage() {
     )
   }
 
-  // Error state
   if (isError || !capsule) {
     return (
       <main className="min-h-[100dvh] bg-zinc-950 flex items-center justify-center">
@@ -162,7 +152,7 @@ export default function CapsulePage() {
           transition={SPRING}
         >
           <p className="text-lg text-zinc-300">胶囊未找到</p>
-          <p className="text-sm text-zinc-600">该胶囊不存在或已被销毁</p>
+          <p className="text-sm text-zinc-600">该胶囊不存在或合约未部署到当前网络</p>
           <Link
             href="/plaza"
             className="mt-4 text-sm text-zinc-500 hover:text-zinc-300 transition-colors active:scale-[0.98]"
@@ -174,19 +164,16 @@ export default function CapsulePage() {
     )
   }
 
-  const bnbValue = capsule.bnbAmount
-    ? parseFloat(formatEther(capsule.bnbAmount))
-    : 0
+  const bnbValue = parseFloat(formatEther(bnbAmount))
+  const remaining = blocksUntilUnlock !== undefined ? Number(blocksUntilUnlock) : -1
+  const canReclaim = reclaimBlock && reclaimBlock > BigInt(0) && currentAddress
 
   return (
     <main className="min-h-[100dvh] bg-zinc-950">
-      {/* Open animation overlay */}
       <OpenAnimation
         isOpen={showAnimation && !!content}
         content={content || ''}
-        onComplete={() => {
-          // Animation complete, page shows content inline too
-        }}
+        onComplete={() => {}}
       />
 
       <motion.div
@@ -195,7 +182,6 @@ export default function CapsulePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={SPRING}
       >
-        {/* Back link */}
         <Link
           href="/plaza"
           className="inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-400 transition-colors mb-8 active:scale-[0.98]"
@@ -204,20 +190,19 @@ export default function CapsulePage() {
           <span>返回广场</span>
         </Link>
 
-        {/* Capsule info header */}
         <div className="mb-8">
           <h1 className="text-2xl font-medium text-zinc-100 tracking-tight mb-1">
             胶囊 #{capsule.id.toString()}
           </h1>
           <p className="text-sm text-zinc-600 font-mono">
-            {truncateAddress(capsule.creator)}
+            {truncateAddress(creator)}
           </p>
         </div>
 
         {/* Info card */}
         <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-6 mb-8">
           <div className="flex flex-col gap-0">
-            <InfoRow label="创建者" value={truncateAddress(capsule.creator)} mono />
+            <InfoRow label="创建者" value={truncateAddress(creator)} mono />
             <Divider />
             <InfoRow label="创建时间" value={formatDate(capsule.createdAt)} />
             <Divider />
@@ -226,7 +211,7 @@ export default function CapsulePage() {
             <InfoRow
               label="状态"
               value={isOpened ? '已打开' : '未打开'}
-              valueClass={isOpened ? 'text-zinc-300' : 'text-zinc-500'}
+              valueClass={isOpened ? 'text-emerald-400' : 'text-zinc-500'}
             />
             {capsule.isPublic && (
               <>
@@ -234,22 +219,94 @@ export default function CapsulePage() {
                 <InfoRow label="可见性" value="公开" />
               </>
             )}
-            {bnbValue > 0 && (
+            {hasBnb && (
               <>
                 <Divider />
                 <div className="flex items-center justify-between py-2">
                   <span className="text-sm text-zinc-600">BNB</span>
                   <div className="flex items-center gap-1.5">
-                    <Coin size={14} weight="fill" className="text-zinc-600" />
+                    <Coin size={14} weight="fill" className="text-amber-500" />
                     <span className="text-sm text-zinc-300 font-mono">
                       {bnbValue.toFixed(4)} BNB
                     </span>
+                    {bnbWithdrawn && (
+                      <span className="text-[10px] text-zinc-600 ml-1">已提取</span>
+                    )}
                   </div>
                 </div>
               </>
             )}
           </div>
         </div>
+
+        {/* BNB Actions */}
+        {hasBnb && !bnbWithdrawn && (
+          <motion.div
+            className="rounded-xl border border-amber-900/30 bg-amber-950/10 p-5 mb-8"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={SPRING}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Wallet size={16} className="text-amber-500" />
+              <span className="text-sm font-medium text-amber-400">
+                {bnbValue.toFixed(4)} BNB 待提取
+              </span>
+            </div>
+
+            {isOpened ? (
+              // Capsule opened — can withdraw
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-zinc-500 mb-2">
+                  胶囊已打开，BNB 可以提取
+                </p>
+                <button
+                  onClick={() => withdrawBnb(capsuleId)}
+                  disabled={isWithdrawPending || isWithdrawSuccess}
+                  className="w-full flex items-center justify-center gap-2 bg-amber-500 text-zinc-950 font-medium rounded-lg px-4 py-2.5 text-sm hover:bg-amber-400 transition-colors active:scale-[0.98] disabled:opacity-40"
+                >
+                  {isWithdrawSuccess ? (
+                    <>
+                      <CheckCircle size={16} />
+                      提取成功
+                    </>
+                  ) : isWithdrawPending ? (
+                    <>
+                      <motion.div
+                        className="w-4 h-4 rounded-full border-2 border-zinc-950/30 border-t-zinc-950"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      />
+                      确认中...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet size={16} />
+                      提取 BNB
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : isCreator ? (
+              // Creator, capsule not opened — show reclaim info
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-zinc-500">
+                  胶囊打开后可提取 BNB。如果长期无人打开，你可以回收。
+                </p>
+                {reclaimBlock && reclaimBlock > BigInt(0) && (
+                  <p className="text-[10px] text-zinc-600 font-mono">
+                    回收可用区块: #{Number(reclaimBlock).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              // Not creator, capsule not opened
+              <p className="text-xs text-zinc-500">
+                胶囊打开后，创建者或接收人可提取 BNB
+              </p>
+            )}
+          </motion.div>
+        )}
 
         {/* Content or Timeline */}
         <AnimatePresence mode="wait">
@@ -262,7 +319,6 @@ export default function CapsulePage() {
               transition={SPRING}
             >
               <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/60 p-8">
-                {/* Letter header */}
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-zinc-800">
                   <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
                     <span className="text-xs text-zinc-500 font-mono">C</span>
@@ -276,8 +332,6 @@ export default function CapsulePage() {
                     </p>
                   </div>
                 </div>
-
-                {/* Letter content */}
                 <p className="text-base leading-relaxed text-zinc-200 whitespace-pre-wrap">
                   {content}
                 </p>
@@ -319,12 +373,11 @@ export default function CapsulePage() {
                 unlockBlock={unlockBlock}
                 isOpened={isOpened}
                 onOpen={handleOpen}
-                isPending={isPending}
+                isPending={isOpenPending}
               />
 
-              {/* Transaction status */}
               <AnimatePresence>
-                {isPending && (
+                {isOpenPending && (
                   <motion.div
                     className="flex flex-col items-center gap-2 mt-4"
                     initial={{ opacity: 0, height: 0 }}

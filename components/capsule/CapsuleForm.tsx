@@ -188,7 +188,7 @@ export default function CapsuleForm() {
         {errors.bnbAmount && (
           <p className="text-sm text-red-400">{errors.bnbAmount}</p>
         )}
-        <p className="text-xs text-zinc-600">可向胶囊中存入BNB，打开时自动转出</p>
+        <p className="text-xs text-zinc-600">可向胶囊中存入BNB，开胶囊后需手动提取</p>
       </div>
 
       <div className="border-t border-zinc-800" />

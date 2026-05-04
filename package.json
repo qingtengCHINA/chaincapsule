@@ -12,6 +12,7 @@
     "deploy:local": "TS_NODE_PROJECT=tsconfig.hardhat.json npx hardhat run scripts/deploy.ts --network localhost"
   },
   "dependencies": {
+    "@binance/w3w-wagmi-connector-v2": "^1.2.11",
     "@phosphor-icons/react": "*",
     "@supabase/ssr": "*",
     "@supabase/supabase-js": "*",
@@ -38,6 +39,7 @@
     "hardhat": "^2.28.6",
     "postcss": "*",
     "tailwindcss": "*",
+    "tsx": "^4.21.0",
     "typescript": "*"
   }
 }
