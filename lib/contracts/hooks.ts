@@ -14,7 +14,7 @@ export function useCreateCapsule() {
 
   function create(contentHash: string, unlockBlock: bigint, isPublic: boolean, bnbAmount: string) {
     const address = getContractAddress(chainId)
-    const value = bnbAmount && parseFloat(bnbAmount) > 0 ? parseEther(bnbAmount) : 0n
+    const value = bnbAmount && parseFloat(bnbAmount) > 0 ? parseEther(bnbAmount) : BigInt(0)
 
     writeContract({
       address,
