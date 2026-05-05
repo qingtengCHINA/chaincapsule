@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useAccount, useBlockNumber, useChainId } from 'wagmi'
 import { useCreateCapsule } from '@/lib/contracts/hooks'
@@ -118,6 +118,10 @@ export default function CapsuleForm() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isUploading, setIsUploading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [lastCid, setLastCid] = useState('')
+  const [lastUnlockBlock, setLastUnlockBlock] = useState(0)
+  const [savedToDb, setSavedToDb] = useState(false)
+
 
   const contractAddr = getContractAddress(chainId)
   const wrongNetwork = !contractAddr
@@ -230,6 +234,9 @@ export default function CapsuleForm() {
       const finalRecipient = preset.recipient === 'locked_self' ? address : (recipient || undefined)
       const finalBnb = bnbDisabled ? '0' : bnbAmount
 
+      setLastCid(cid)
+      setLastUnlockBlock(unlockBlock)
+      setSavedToDb(false)
       create(title.trim(), cid, BigInt(unlockBlock), effectiveIsPublic, finalBnb, finalRecipient)
     } catch (err) {
       setErrors({ submit: err instanceof Error ? err.message : '提交失败，请重试' })
@@ -237,6 +244,29 @@ export default function CapsuleForm() {
       setIsUploading(false)
     }
   }
+
+  // Save capsule metadata to Supabase after on-chain creation succeeds
+  useEffect(() => {
+    if (isSuccess && capsuleId !== undefined && !savedToDb) {
+      setSavedToDb(true)
+      fetch('/api/capsules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chainId,
+          onChainId: Number(capsuleId),
+          creator: address,
+          title: title.trim(),
+          contentHash: lastCid,
+          unlockBlock: lastUnlockBlock,
+          bnbAmount: bnbDisabled ? '0' : bnbAmount,
+          isPublic: effectiveIsPublic,
+          recipient: effectiveRecipient || null,
+        }),
+      }).catch((err) => console.warn('Failed to save capsule metadata:', err))
+    }
+  }, [isSuccess, capsuleId, savedToDb])
+
 
   const displayError = errors.submit || (() => {
     if (!contractError?.message) return ''
