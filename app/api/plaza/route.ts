@@ -99,7 +99,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ capsules, totalCapsules })
   } catch (error) {
-    console.error('Plaza fetch error:', error instanceof Error ? error.message : error)
-    return NextResponse.json({ capsules: [], totalCapsules: 0, error: '获取数据失败' })
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Plaza fetch error:', msg)
+    return NextResponse.json({ capsules: [], totalCapsules: 0, error: '获取数据失败', debug: msg })
   }
 }
