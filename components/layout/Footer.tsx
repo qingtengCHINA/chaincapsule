@@ -1,8 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function Footer() {
+  const { t } = useI18n()
+
   return (
     <footer className="border-t border-white/[0.04] bg-[#060608]">
       <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-20 py-6">
@@ -26,17 +29,21 @@ export default function Footer() {
             </Link>
           </div>
 
-          {/* Right: Made by */}
-          <div className="text-[11px] text-zinc-600">
-            Made by{' '}
-            <a
-              href="https://qingtengstudio.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-zinc-400 hover:text-zinc-200 transition-colors"
-            >
-              QingTengStudio
-            </a>
+          {/* Right: Copyright + Made by */}
+          <div className="flex items-center gap-3 text-[11px] text-zinc-600">
+            <span>{t('footer.copyright')}</span>
+            <span className="text-zinc-800">·</span>
+            <span>
+              {t('footer.madeBy')}{' '}
+              <a
+                href="https://qingtengstudio.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-400 hover:text-zinc-200 transition-colors"
+              >
+                QingTengStudio
+              </a>
+            </span>
           </div>
         </div>
       </div>

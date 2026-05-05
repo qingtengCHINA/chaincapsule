@@ -7,6 +7,7 @@ import StarField from '@/components/three/StarField'
 import Button from '@/components/ui/Button'
 import { ArrowRight, HourglassSimple, Plus } from '@phosphor-icons/react'
 import { useUserCapsules, useCapsule, useBlocksUntilUnlock } from '@/lib/contracts/hooks'
+import { useI18n } from '@/lib/i18n/context'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40, filter: 'blur(10px)' },
@@ -59,18 +60,19 @@ function GlowOrb() {
 function CapsuleMini({ capsuleId }: { capsuleId: bigint }) {
   const { data: capsule } = useCapsule(capsuleId)
   const { data: blocksUntilUnlock } = useBlocksUntilUnlock(capsuleId)
+  const { t } = useI18n()
 
   if (!capsule) return null
 
   const isOpened = capsule.isOpened
   const remaining = blocksUntilUnlock !== undefined ? Number(blocksUntilUnlock) : -1
-  let status = '未解锁'
+  let status = t('plaza.locked')
   let color = 'text-amber-400/80 bg-amber-950/30 border-amber-800/30'
   if (isOpened) {
-    status = '已打开'
+    status = t('plaza.opened')
     color = 'text-zinc-400 bg-zinc-800 border-zinc-700/50'
   } else if (remaining <= 0) {
-    status = '已解锁'
+    status = t('plaza.unlocked')
     color = 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40'
   }
 
@@ -98,6 +100,7 @@ function CapsuleMini({ capsuleId }: { capsuleId: bigint }) {
 function MyCapsulesSection() {
   const { address, isConnected } = useAccount()
   const { data: capsuleIds, isLoading } = useUserCapsules(address)
+  const { t } = useI18n()
 
   if (!isConnected) {
     return (
@@ -105,10 +108,10 @@ function MyCapsulesSection() {
         <div className="mx-auto max-w-7xl">
           <div className="border-t border-zinc-800/50 pt-12">
             <h2 className="text-lg font-medium tracking-tight text-zinc-300">
-              我的胶囊
+              {t('profile.title')}
             </h2>
             <p className="mt-2 text-sm text-zinc-600">
-              连接钱包后，你创建的胶囊会在这里显示。
+              {t('profile.connect')}
             </p>
           </div>
         </div>
@@ -125,23 +128,23 @@ function MyCapsulesSection() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-medium tracking-tight text-zinc-300">
-                我的胶囊
+                {t('profile.title')}
               </h2>
               <p className="mt-1 text-sm text-zinc-600">
-                {isLoading ? '加载中...' : `${ids.length} 颗胶囊`}
+                {isLoading ? t('common.loading') : `${ids.length} ${t('home.capsules')}`}
               </p>
             </div>
             <Link href="/create">
               <button className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
                 <Plus size={14} />
-                创建
+                {t('nav.create')}
               </button>
             </Link>
           </div>
 
           {ids.length === 0 ? (
             <p className="text-sm text-zinc-600 py-8">
-              还没有胶囊，<Link href="/create" className="text-zinc-400 hover:text-zinc-200 underline underline-offset-4">创建第一颗</Link>
+              {t('profile.noCapsules')}
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -153,7 +156,7 @@ function MyCapsulesSection() {
 
           {ids.length > 6 && (
             <Link href="/profile" className="inline-block mt-4 text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
-              查看全部 →
+              {t('home.viewAll')} →
             </Link>
           )}
         </div>
@@ -163,6 +166,8 @@ function MyCapsulesSection() {
 }
 
 export default function Home() {
+  const { t } = useI18n()
+
   return (
     <>
       <StarField />
@@ -192,27 +197,26 @@ export default function Home() {
                   className="mt-6 text-lg md:text-xl text-zinc-400 leading-relaxed max-w-md"
                   style={{ fontFamily: 'var(--font-cn), system-ui' }}
                 >
-                  把你的话，封存在区块里，<br />
-                  <span className="text-zinc-300">留给未来。</span>
+                  {t('home.subtitle')}
                 </motion.p>
 
                 <motion.div custom={3} initial="hidden" animate="show" variants={fadeUp} className="mt-10 flex items-center gap-4">
                   <Link href="/create">
                     <Button size="lg" className="group">
-                      创建胶囊
+                      {t('home.cta')}
                       <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-0.5" />
                     </Button>
                   </Link>
                   <Link href="/plaza">
-                    <Button variant="secondary" size="lg">探索广场</Button>
+                    <Button variant="secondary" size="lg">{t('home.explore')}</Button>
                   </Link>
                 </motion.div>
 
                 <motion.div custom={4} initial="hidden" animate="show" variants={fadeUp} className="mt-16 flex gap-10">
                   {[
-                    { label: '链上永久存储', value: '∞' },
-                    { label: 'BNB Chain 低 Gas', value: '~$0.03' },
-                    { label: '去中心化存储', value: 'IPFS' },
+                    { label: t('home.stat.permanent'), value: '∞' },
+                    { label: t('home.stat.lowGas'), value: '~$0.03' },
+                    { label: t('home.stat.ipfs'), value: 'IPFS' },
                   ].map((stat) => (
                     <div key={stat.label}>
                       <div className="text-xl font-semibold text-white" style={{ fontFamily: 'var(--font-en)' }}>{stat.value}</div>
@@ -229,7 +233,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 我的胶囊 */}
+        {/* My Capsules */}
         <MyCapsulesSection />
       </main>
     </>

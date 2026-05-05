@@ -82,6 +82,35 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Whitepaper
     'wp.title': '白皮书',
     'wp.subtitle': 'ChainCapsule 技术白皮书',
+
+    // Home extras
+    'home.capsules': '颗胶囊',
+    'home.viewAll': '查看全部',
+    'home.stat.permanent': '链上永久存储',
+    'home.stat.lowGas': 'BNB Chain 低 Gas',
+    'home.stat.ipfs': '去中心化存储',
+
+    // Plaza extras
+    'plaza.opened': '已打开',
+    'plaza.desc': '探索其他人封存的时光',
+
+    // Create page extras
+    'create.needWallet': '需要连接钱包',
+    'create.needWalletDesc': '连接你的 Web3 钱包以创建链上时光胶囊',
+    'create.desc': '封存你的话语，留给未来的某个人',
+
+    // Profile page
+    'profile.connectMsg': '连接钱包查看你的胶囊',
+    'profile.connectDesc': '连接钱包后，你创建的胶囊会在这里显示',
+    'profile.capsuleCount': '颗胶囊',
+    'profile.tab.all': '全部',
+    'profile.tab.locked': '未解锁',
+    'profile.tab.unlocked': '已解锁',
+    'profile.noCapsulesYet': '还没有胶囊，创建你的第一颗',
+    'profile.recipientTitle': '指定给我的胶囊',
+    'profile.recipientDesc': '别人指定你为领取人，你也可以打开这些胶囊并领取 BNB',
+    'profile.faq': '常见问题',
+    'profile.block': '区块',
   },
   en: {
     'nav.home': 'Home',
@@ -145,7 +174,33 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'wp.title': 'Whitepaper',
     'wp.subtitle': 'ChainCapsule Technical Whitepaper',
+
+    'home.capsules': 'capsules',
+    'home.viewAll': 'View All',
+    'home.stat.permanent': 'On-chain Forever',
+    'home.stat.lowGas': 'BNB Chain Low Gas',
+    'home.stat.ipfs': 'Decentralized Storage',
+
+    'plaza.opened': 'Opened',
+    'plaza.desc': 'Explore time capsules sealed by others',
+
+    'create.needWallet': 'Wallet Required',
+    'create.needWalletDesc': 'Connect your Web3 wallet to create an on-chain time capsule',
+    'create.desc': 'Seal your words for someone in the future',
+
+    'profile.connectMsg': 'Connect wallet to view your capsules',
+    'profile.connectDesc': 'Your created capsules will appear here after connecting',
+    'profile.capsuleCount': 'capsules',
+    'profile.tab.all': 'All',
+    'profile.tab.locked': 'Locked',
+    'profile.tab.unlocked': 'Unlocked',
+    'profile.noCapsulesYet': 'No capsules yet — create your first one',
+    'profile.recipientTitle': 'Capsules For Me',
+    'profile.recipientDesc': 'Others designated you as recipient — open and claim BNB',
+    'profile.faq': 'FAQ',
+    'profile.block': 'Block',
   },
+
   ja: {
     'nav.home': 'ホーム',
     'nav.create': '作成',
@@ -208,6 +263,13 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'wp.title': 'ホワイトペーパー',
     'wp.subtitle': 'ChainCapsule 技術ホワイトペーパー',
+    'home.capsules': '個のカプセル',
+    'home.viewAll': 'すべて表示',
+    'home.stat.permanent': '永久保存',
+    'home.stat.lowGas': 'BNB Chain 低Gas',
+    'home.stat.ipfs': '分散ストレージ',
+    'plaza.opened': '開封済み',
+
   },
   ko: {
     'nav.home': '홈',
@@ -271,6 +333,13 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'wp.title': '백서',
     'wp.subtitle': 'ChainCapsule 기술 백서',
+    'home.capsules': '개의 캡슐',
+    'home.viewAll': '전체 보기',
+    'home.stat.permanent': '영구 저장',
+    'home.stat.lowGas': 'BNB Chain 저Gas',
+    'home.stat.ipfs': '분산 스토리지',
+    'plaza.opened': '열림',
+
   },
   ru: {
     'nav.home': 'Главная',
@@ -334,6 +403,13 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'wp.title': 'Белая Книга',
     'wp.subtitle': 'Техническая Белая Книга ChainCapsule',
+    'home.capsules': 'капсул',
+    'home.viewAll': 'Показать все',
+    'home.stat.permanent': 'Навечно в цепи',
+    'home.stat.lowGas': 'BNB Chain низкий Gas',
+    'home.stat.ipfs': 'Децентрализованное хранилище',
+    'plaza.opened': 'Открыто',
+
   },
   fr: {
     'nav.home': 'Accueil',
@@ -397,6 +473,13 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'wp.title': 'Livre Blanc',
     'wp.subtitle': 'Livre Blanc Technique de ChainCapsule',
+    'home.capsules': 'capsules',
+    'home.viewAll': 'Voir tout',
+    'home.stat.permanent': 'Sur la chaîne pour toujours',
+    'home.stat.lowGas': 'BNB Chain Gas faible',
+    'home.stat.ipfs': 'Stockage décentralisé',
+    'plaza.opened': 'Ouvert',
+
   },
   de: {
     'nav.home': 'Startseite',
@@ -460,5 +543,12 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'wp.title': 'Whitepaper',
     'wp.subtitle': 'ChainCapsule Technisches Whitepaper',
+    'home.capsules': 'Kapseln',
+    'home.viewAll': 'Alle anzeigen',
+    'home.stat.permanent': 'On-chain für immer',
+    'home.stat.lowGas': 'BNB Chain niedriges Gas',
+    'home.stat.ipfs': 'Dezentraler Speicher',
+    'plaza.opened': 'Geöffnet',
+
   },
 }

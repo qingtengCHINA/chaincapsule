@@ -8,46 +8,14 @@ import { Wallet, Plus, CaretDown } from '@phosphor-icons/react'
 import { useUserCapsules, useCapsule, useBlocksUntilUnlock } from '@/lib/contracts/hooks'
 import { truncateAddress } from '@/lib/utils/format'
 import ConnectButton from '@/components/wallet/ConnectButton'
+import { useI18n } from '@/lib/i18n/context'
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 }
 const CONTRACT_ADDRESS_TESTNET = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || ''
 
 type TabKey = 'all' | 'locked' | 'unlocked'
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'locked', label: '未解锁' },
-  { key: 'unlocked', label: '已解锁' },
-]
-
-const FAQ_ITEMS = [
-  {
-    q: '网站没了，我的 BNB 还能取出来吗？',
-    a: '能。合约部署在 BNB Smart Chain 区块链上，跟网站完全独立。网站只是个"遥控器"，合约才是"保险箱"。你可以直接去 BSCScan 操作：打开 testnet.bscscan.com → 搜索合约地址 → Contract → Write Contract → 连接钱包 → 调用 withdrawBnb(id) 或 reclaimBnb(id)。',
-  },
-  {
-    q: '合约地址在哪？',
-    a: `BSC Testnet: ${CONTRACT_ADDRESS_TESTNET || '未部署'}。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。`,
-  },
-  {
-    q: '胶囊 ID 是什么？是密码吗？',
-    a: '不是密码。胶囊 ID 是链上的编号（1, 2, 3...），用于定位你的胶囊。任何人都能用 ID 查看公开胶囊的信息，但只有你的钱包签名才能开胶囊和提 BNB。安全靠的是你的钱包私钥，不是 ID。但你仍然需要记住 ID 来操作你的胶囊。',
-  },
-  {
-    q: '创建胶囊后要注意什么？',
-    a: '请务必记下你的胶囊 ID（创建成功后会显示）。虽然你的钱包地址关联了所有胶囊，但直接通过 BSCScan 操作时需要输入 ID。建议截图保存或记在本地。',
-  },
-  {
-    q: 'BNB 附加功能安全吗？',
-    a: '合约使用了 OpenZeppelin 的 ReentrancyGuard 防重入攻击，withdrawBnb 和 reclaimBnb 都有 nonReentrant 保护。BNB 锁在合约里，只有创建者或指定接收人能提取。如果长期无人提取（约 365 天），创建者可以回收。合约源码开源，可在 GitHub 和 BSCScan 上审查。',
-  },
-  {
-    q: '合约经过审计了吗？',
-    a: '目前合约使用了 OpenZeppelin 标准库（Ownable, ReentrancyGuard, Pausable），有 20 个单元测试覆盖。合约源码开源在 GitHub。对于小额使用已经足够安全。未来如果项目规模增大，会考虑专业审计。',
-  },
-]
-
-function FAQItem({ item, index }: { item: typeof FAQ_ITEMS[0]; index: number }) {
+function FAQItem({ item, index }: { item: { q: string; a: string }; index: number }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="border-b border-zinc-800/40 last:border-b-0">
@@ -107,29 +75,6 @@ function CapsuleRowSkeleton() {
   )
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between mb-2">
-        <SkeletonBlock className="h-8 w-32" />
-        <SkeletonBlock className="h-5 w-24" />
-      </div>
-      <div className="flex items-center gap-3 mb-6">
-        <SkeletonBlock className="h-6 w-40" />
-        <SkeletonBlock className="h-5 w-20" />
-      </div>
-      <div className="flex gap-1 p-1 rounded-lg bg-zinc-900/50 border border-zinc-800/50 mb-6">
-        <SkeletonBlock className="flex-1 h-9 rounded-md" />
-        <SkeletonBlock className="flex-1 h-9 rounded-md" />
-        <SkeletonBlock className="flex-1 h-9 rounded-md" />
-      </div>
-      <CapsuleRowSkeleton />
-      <CapsuleRowSkeleton />
-      <CapsuleRowSkeleton />
-    </div>
-  )
-}
-
 interface CapsuleRowProps {
   capsuleId: bigint
   tab: TabKey
@@ -138,6 +83,7 @@ interface CapsuleRowProps {
 function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
   const { data: capsule, isLoading } = useCapsule(capsuleId)
   const { data: blocksUntilUnlock } = useBlocksUntilUnlock(capsuleId)
+  const { t } = useI18n()
 
   if (isLoading || !capsule) {
     if (tab !== 'all') return null
@@ -156,13 +102,13 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
   let statusLabel: string
   let statusColor: string
   if (isOpened) {
-    statusLabel = '已打开'
+    statusLabel = t('plaza.opened')
     statusColor = 'text-zinc-400 bg-zinc-800 border-zinc-700/50'
   } else if (remaining <= 0) {
-    statusLabel = '已解锁'
+    statusLabel = t('plaza.unlocked')
     statusColor = 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40'
   } else {
-    statusLabel = '未解锁'
+    statusLabel = t('plaza.locked')
     statusColor = 'text-amber-400/80 bg-amber-950/30 border-amber-800/30'
   }
 
@@ -184,7 +130,7 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
           <div className="flex items-center gap-3">
             {!isOpened && (
               <span className="text-xs text-zinc-600 font-mono">
-                区块 #{unlockBlock.toLocaleString()}
+                {t('profile.block')} #{unlockBlock.toLocaleString()}
               </span>
             )}
             <svg className="w-4 h-4 text-zinc-700 group-hover:text-zinc-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -198,6 +144,7 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
 }
 
 function FilteredList({ ids, tab }: { ids: readonly bigint[]; tab: TabKey }) {
+  const { t } = useI18n()
   if (ids.length === 0) {
     return (
       <motion.div
@@ -206,11 +153,11 @@ function FilteredList({ ids, tab }: { ids: readonly bigint[]; tab: TabKey }) {
         animate={{ opacity: 1, y: 0 }}
         transition={SPRING}
       >
-        <p className="text-sm text-zinc-500">还没有胶囊，创建你的第一颗</p>
+        <p className="text-sm text-zinc-500">{t('profile.noCapsulesYet')}</p>
         <Link href="/create">
           <button className="inline-flex items-center gap-2 rounded-full bg-white text-zinc-950 px-5 py-2.5 text-sm font-medium transition-transform active:scale-[0.98] hover:bg-zinc-200">
             <Plus size={16} weight="bold" />
-            创建胶囊
+            {t('create.title')}
           </button>
         </Link>
       </motion.div>
@@ -226,13 +173,54 @@ function FilteredList({ ids, tab }: { ids: readonly bigint[]; tab: TabKey }) {
   )
 }
 
+function FAQSection() {
+  const { t, locale } = useI18n()
+
+  const FAQ_ITEMS = locale === 'zh' ? [
+    { q: '网站没了，我的 BNB 还能取出来吗？', a: `能。合约部署在 BNB Smart Chain 区块链上，跟网站完全独立。网站只是个"遥控器"，合约才是"保险箱"。你可以直接去 BSCScan 操作：打开 testnet.bscscan.com → 搜索合约地址 → Contract → Write Contract → 连接钱包 → 调用 withdrawBnb(id) 或 reclaimBnb(id)。` },
+    { q: '合约地址在哪？', a: `BSC Testnet: ${CONTRACT_ADDRESS_TESTNET || '未部署'}。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。` },
+    { q: '胶囊 ID 是什么？是密码吗？', a: '不是密码。胶囊 ID 是链上的编号（1, 2, 3...），用于定位你的胶囊。任何人都能用 ID 查看公开胶囊的信息，但只有你的钱包签名才能开胶囊和提 BNB。安全靠的是你的钱包私钥，不是 ID。' },
+    { q: '创建胶囊后要注意什么？', a: '请务必记下你的胶囊 ID（创建成功后会显示）。虽然你的钱包地址关联了所有胶囊，但直接通过 BSCScan 操作时需要输入 ID。建议截图保存或记在本地。' },
+    { q: 'BNB 附加功能安全吗？', a: '合约使用了 OpenZeppelin 的 ReentrancyGuard 防重入攻击，withdrawBnb 和 reclaimBnb 都有 nonReentrant 保护。BNB 锁在合约里，只有创建者或指定接收人能提取。如果长期无人提取（约 365 天），创建者可以回收。合约源码开源，可在 GitHub 和 BSCScan 上审查。' },
+    { q: '合约经过审计了吗？', a: '目前合约使用了 OpenZeppelin 标准库（Ownable, ReentrancyGuard, Pausable），有 20 个单元测试覆盖。合约源码开源在 GitHub。对于小额使用已经足够安全。未来如果项目规模增大，会考虑专业审计。' },
+  ] : [
+    { q: 'If the website goes down, can I still get my BNB?', a: 'Yes. The contract lives on BNB Smart Chain independently. Go to testnet.bscscan.com → search the contract address → Contract → Write Contract → connect wallet → call withdrawBnb(id) or reclaimBnb(id).' },
+    { q: 'Where is the contract address?', a: `BSC Testnet: ${CONTRACT_ADDRESS_TESTNET || 'Not deployed'}. This address is permanent and viewable on BSCScan.` },
+    { q: 'What is the capsule ID? Is it a password?', a: 'No. The capsule ID is an on-chain number (1, 2, 3...) used to locate your capsule. Anyone can view public capsules by ID, but only your wallet signature can open capsules and withdraw BNB.' },
+    { q: 'What should I note after creating a capsule?', a: 'Save your capsule ID (shown after creation). Your wallet links all your capsules, but you need the ID for direct BSCScan operations.' },
+    { q: 'Is the BNB attachment feature safe?', a: 'The contract uses OpenZeppelin ReentrancyGuard. BNB is locked in the contract — only the creator or designated recipient can withdraw. After ~365 days of inactivity, the creator can reclaim. Source code is open on GitHub and BSCScan.' },
+    { q: 'Has the contract been audited?', a: 'The contract uses OpenZeppelin standard libraries with 20 unit tests. Source code is open on GitHub. Sufficient for small amounts. Professional audit planned for larger scale.' },
+  ]
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 pb-16">
+      <div className="border-t border-zinc-800/40 pt-12">
+        <h2 className="text-lg font-semibold tracking-tight text-zinc-200 mb-6">
+          {t('profile.faq')}
+        </h2>
+        <div className="rounded-xl border border-zinc-800/40 bg-zinc-900/20 px-5">
+          {FAQ_ITEMS.map((item, i) => (
+            <FAQItem key={i} item={item} index={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const { address, isConnected } = useAccount()
   const { data: capsuleIds, isLoading } = useUserCapsules(address)
   const [activeTab, setActiveTab] = useState<TabKey>('all')
   const [recipientIds, setRecipientIds] = useState<number[]>([])
+  const { t } = useI18n()
 
-  // Fetch capsules where user is recipient
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: 'all', label: t('profile.tab.all') },
+    { key: 'locked', label: t('profile.tab.locked') },
+    { key: 'unlocked', label: t('profile.tab.unlocked') },
+  ]
+
   useEffect(() => {
     if (!address) return
     fetch(`/api/recipient-capsules?address=${address}`)
@@ -255,14 +243,12 @@ export default function ProfilePage() {
               <Wallet size={28} className="text-zinc-600" />
             </div>
             <div>
-              <p className="text-lg text-zinc-300 mb-2">连接钱包查看你的胶囊</p>
-              <p className="text-sm text-zinc-600">连接钱包后，你创建的胶囊会在这里显示</p>
+              <p className="text-lg text-zinc-300 mb-2">{t('profile.connectMsg')}</p>
+              <p className="text-sm text-zinc-600">{t('profile.connectDesc')}</p>
             </div>
             <ConnectButton />
           </motion.div>
         </div>
-
-        {/* FAQ always visible */}
         <FAQSection />
       </main>
     )
@@ -279,10 +265,9 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={SPRING}
         >
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-100 mb-3">
-              我的胶囊
+              {t('profile.title')}
             </h1>
             <div className="flex items-center gap-3">
               <span className="text-sm text-zinc-500 font-mono">
@@ -290,12 +275,11 @@ export default function ProfilePage() {
               </span>
               <span className="text-xs text-zinc-700">|</span>
               <span className="text-sm text-zinc-500">
-                {isLoading ? '...' : `${totalCount} 颗胶囊`}
+                {isLoading ? '...' : `${totalCount} ${t('profile.capsuleCount')}`}
               </span>
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="relative flex gap-1 p-1 rounded-lg bg-zinc-900/50 border border-zinc-800/50 mb-6">
             {TABS.map((tab) => (
               <button
@@ -315,7 +299,6 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Content */}
           {isLoading ? (
             <div className="flex flex-col gap-2">
               <CapsuleRowSkeleton />
@@ -338,15 +321,14 @@ export default function ProfilePage() {
         </motion.div>
       </div>
 
-      {/* Recipient capsules */}
       {recipientIds.length > 0 && (
         <div className="mx-auto max-w-2xl px-4 pb-8">
           <div className="border-t border-zinc-800/40 pt-8">
             <h2 className="text-lg font-medium tracking-tight text-zinc-300 mb-4">
-              指定给我的胶囊
+              {t('profile.recipientTitle')}
             </h2>
             <p className="text-xs text-zinc-600 mb-4">
-              别人指定你为领取人，你也可以打开这些胶囊并领取 BNB
+              {t('profile.recipientDesc')}
             </p>
             <div className="flex flex-col gap-2">
               {recipientIds.map((id) => (
@@ -357,25 +339,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* FAQ */}
       <FAQSection />
     </main>
-  )
-}
-
-function FAQSection() {
-  return (
-    <div className="mx-auto max-w-2xl px-4 pb-16">
-      <div className="border-t border-zinc-800/40 pt-12">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-200 mb-6">
-          常见问题
-        </h2>
-        <div className="rounded-xl border border-zinc-800/40 bg-zinc-900/20 px-5">
-          {FAQ_ITEMS.map((item, i) => (
-            <FAQItem key={i} item={item} index={i} />
-          ))}
-        </div>
-      </div>
-    </div>
   )
 }
