@@ -72,7 +72,7 @@ export default function CapsulePage() {
   const { data: capsule, isLoading, isError } = useCapsule(capsuleId)
   const { data: blocksUntilUnlock } = useBlocksUntilUnlock(capsuleId)
   const { data: reclaimBlock } = useReclaimBlock(capsuleId)
-  const { openCapsule, isPending: isOpenPending, isSuccess: isOpenSuccess } = useOpenCapsule()
+  const { openCapsule, hash: openHash, isPending: isOpenPending, isSuccess: isOpenSuccess } = useOpenCapsule()
   const { withdrawBnb, isPending: isWithdrawPending, isSuccess: isWithdrawSuccess } = useWithdrawBnb()
   const { reclaimBnb, isPending: isReclaimPending, isSuccess: isReclaimSuccess } = useReclaimBnb()
 
@@ -452,10 +452,15 @@ export default function CapsulePage() {
 
         {/* Comments */}
         <CapsuleComments capsuleId={Number(capsuleId)} />
-        {contractAddress && (
+        {contractAddress && (() => {
+          const explorerBase = chainId === 56 ? 'https://bscscan.com' : 'https://testnet.bscscan.com'
+          const explorerUrl = openHash
+            ? `${explorerBase}/tx/${openHash}`
+            : `${explorerBase}/address/${contractAddress}`
+          return (
           <div className="mt-8 pt-6 border-t border-zinc-800/40">
             <a
-              href={`https://testnet.bscscan.com/address/${contractAddress}#events`}
+              href={explorerUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
@@ -464,7 +469,8 @@ export default function CapsulePage() {
               在 BSCScan 上查看交易历史
             </a>
           </div>
-        )}
+          )
+        })()}
       </motion.div>
     </main>
   )
