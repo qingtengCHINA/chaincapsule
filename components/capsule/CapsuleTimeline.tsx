@@ -25,7 +25,8 @@ export default function CapsuleTimeline({
   const { data: currentBlock } = useBlockNumber({ watch: true })
   const current = currentBlock ? Number(currentBlock) : 0
   const blocksRemaining = unlockBlock - current
-  const isUnlocked = blocksRemaining <= 0
+  // Only show unlocked if wallet is connected AND block has passed
+  const isUnlocked = currentBlock !== undefined && blocksRemaining <= 0
 
   const totalBlocks = createdAtBlock ? unlockBlock - createdAtBlock : 1
   const elapsed = createdAtBlock ? current - createdAtBlock : 0

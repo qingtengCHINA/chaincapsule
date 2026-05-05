@@ -168,12 +168,12 @@ export default function CapsulePlaza() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="搜索胶囊标题或内容..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-4 py-3 sm:py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
           />
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {filterTabs.map((tab) => (
             <button
               key={tab.key}

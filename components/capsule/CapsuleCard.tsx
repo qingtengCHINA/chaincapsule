@@ -59,7 +59,7 @@ export default function CapsuleCard({
       <Link href={`/capsule/${id}`} className="block group">
         <div
           className="
-            rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-5
+            rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-4 sm:p-5
             transition-all duration-200
             hover:border-zinc-700/70 hover:bg-zinc-900/60
             hover:shadow-[0_0_20px_rgba(113,113,122,0.08)]

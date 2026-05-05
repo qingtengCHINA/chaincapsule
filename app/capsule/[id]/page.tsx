@@ -31,7 +31,7 @@ function SkeletonBlock({ className }: { className?: string }) {
 
 function LoadingSkeleton() {
   return (
-    <div className="w-full max-w-lg mx-auto px-4 py-12">
+    <div className="w-full max-w-lg mx-auto px-4 py-6 sm:py-12">
       <div className="flex flex-col gap-6">
         <SkeletonBlock className="h-4 w-20" />
         <div className="flex flex-col gap-3">
@@ -173,7 +173,10 @@ export default function CapsulePage() {
     )
   }
 
-  if (isError || !capsule) {
+  // Capsule doesn't exist if creator is zero address (contract returns default struct)
+  const capsuleExists = capsule && capsule.creator !== '0x0000000000000000000000000000000000000000'
+
+  if (isError || !capsule || !capsuleExists) {
     return (
       <main className="min-h-[100dvh] bg-zinc-950 flex items-center justify-center">
         <motion.div
@@ -208,7 +211,7 @@ export default function CapsulePage() {
       />
 
       <motion.div
-        className="w-full max-w-lg mx-auto px-4 py-12"
+        className="w-full max-w-lg mx-auto px-4 py-6 sm:py-12"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={SPRING}
@@ -222,7 +225,7 @@ export default function CapsulePage() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-2xl font-medium text-zinc-100 tracking-tight mb-1">
+          <h1 className="text-xl sm:text-2xl font-medium text-zinc-100 tracking-tight mb-1">
             {capsule.title || `胶囊 #${capsule.id.toString()}`}
           </h1>
           {capsule.title && (
@@ -250,7 +253,7 @@ export default function CapsulePage() {
         </div>
 
         {/* Info card */}
-        <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-6 mb-8">
+        <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-4 sm:p-6 mb-8">
           <div className="flex flex-col gap-0">
             <InfoRow label="创建者" value={truncateAddress(creator)} mono />
             <Divider />
@@ -296,7 +299,7 @@ export default function CapsulePage() {
         {/* BNB Actions */}
         {hasBnb && !bnbWithdrawn && (
           <motion.div
-            className="rounded-xl border border-amber-900/30 bg-amber-950/10 p-5 mb-8"
+            className="rounded-xl border border-amber-900/30 bg-amber-950/10 p-4 sm:p-5 mb-8"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={SPRING}
@@ -372,7 +375,7 @@ export default function CapsulePage() {
               exit={{ opacity: 0, y: -12 }}
               transition={SPRING}
             >
-              <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/60 p-8">
+              <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/60 p-4 sm:p-8">
                 <div className="flex items-center gap-3 mb-6 pb-4 border-b border-zinc-800">
                   <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
                     <span className="text-xs text-zinc-500 font-mono">C</span>

@@ -172,8 +172,9 @@ export default function CapsuleForm() {
       newErrors.unlockDate = '请选择解锁日期'
     } else {
       const target = new Date(`${unlockDate}T${unlockTime || '00:00'}`)
-      if (target.getTime() <= Date.now()) {
-        newErrors.unlockDate = '解锁时间必须在未来'
+      const minTime = Date.now() + 10 * 60 * 1000  // 10 minutes from now
+      if (target.getTime() <= minTime) {
+        newErrors.unlockDate = '解锁时间至少在10分钟后'
       }
     }
 
@@ -437,7 +438,7 @@ export default function CapsuleForm() {
             type="date"
             value={unlockDate}
             onChange={(e) => setUnlockDate(e.target.value)}
-            min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+            min={new Date().toISOString().split('T')[0]}
             className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 focus:outline-none focus:border-zinc-600 transition-colors [color-scheme:dark]"
             disabled={isDisabled}
           />
@@ -452,7 +453,7 @@ export default function CapsuleForm() {
         {errors.unlockDate && (
           <p className="text-sm text-red-400">{errors.unlockDate}</p>
         )}
-        <p className="text-xs text-zinc-600">选择胶囊可以被打开的时间，最早明天</p>
+        <p className="text-xs text-zinc-600">选择胶囊可以被打开的时间，最早10分钟后</p>
       </div>
 
       <div className="border-t border-zinc-800" />
