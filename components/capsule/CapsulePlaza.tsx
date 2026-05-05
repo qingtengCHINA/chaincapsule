@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useBlockNumber } from 'wagmi'
+import { MagnifyingGlass } from '@phosphor-icons/react'
 import CapsuleCard from './CapsuleCard'
 
 interface CapsuleData {
@@ -72,10 +74,21 @@ function SkeletonGrid() {
   )
 }
 
+const filterTabs = [
+  { key: 'all' as const, label: '全部' },
+  { key: 'unlocked' as const, label: '已解锁' },
+  { key: 'locked' as const, label: '未解锁' },
+  { key: 'bnb' as const, label: '有 BNB' },
+]
+
 export default function CapsulePlaza() {
   const [capsules, setCapsules] = useState<CapsuleData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unlocked' | 'locked' | 'bnb'>('all')
+
+  const { data: currentBlock } = useBlockNumber()
 
   useEffect(() => {
     fetch('/api/plaza')
@@ -123,26 +136,87 @@ export default function CapsulePlaza() {
     )
   }
 
+  const blockNum = currentBlock ? Number(currentBlock) : 0
+
+  const filtered = capsules.filter((c) => {
+    const query = searchQuery.toLowerCase().trim()
+    const matchesSearch =
+      !query ||
+      c.title.toLowerCase().includes(query) ||
+      (c.contentPreview && c.contentPreview.toLowerCase().includes(query))
+
+    const isUnlocked = blockNum > 0 && c.unlockBlock <= blockNum
+
+    const matchesFilter =
+      activeFilter === 'all' ||
+      (activeFilter === 'unlocked' && isUnlocked) ||
+      (activeFilter === 'locked' && !isUnlocked) ||
+      (activeFilter === 'bnb' && parseFloat(c.bnbAmount) > 0)
+
+    return matchesSearch && matchesFilter
+  })
+
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="mt-8 columns-1 md:columns-2 lg:columns-3 gap-6"
-    >
-      {capsules.map((capsule) => (
-        <motion.div key={capsule.id} variants={item}>
-          <CapsuleCard
-            id={capsule.id}
-            creator={capsule.creator}
-            title={capsule.title}
-            contentPreview={capsule.contentPreview || ''}
-            unlockBlock={capsule.unlockBlock}
-            isOpened={capsule.isOpened}
-            bnbAmount={capsule.bnbAmount}
+    <div>
+      {/* Search + Filter */}
+      <div className="mt-8 mb-6 space-y-4">
+        {/* Search input */}
+        <div className="relative">
+          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="搜索胶囊标题或内容..."
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
           />
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex gap-2">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveFilter(tab.key)}
+              className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                activeFilter === tab.key
+                  ? 'bg-zinc-800 border-zinc-700 text-zinc-200'
+                  : 'border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Results */}
+      {filtered.length === 0 ? (
+        <div className="mt-16 text-center">
+          <p className="text-zinc-500 text-sm">没有匹配的胶囊</p>
+        </div>
+      ) : (
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="columns-1 md:columns-2 lg:columns-3 gap-6"
+        >
+          {filtered.map((capsule) => (
+            <motion.div key={capsule.id} variants={item}>
+              <CapsuleCard
+                id={capsule.id}
+                creator={capsule.creator}
+                title={capsule.title}
+                contentPreview={capsule.contentPreview || ''}
+                unlockBlock={capsule.unlockBlock}
+                isOpened={capsule.isOpened}
+                bnbAmount={capsule.bnbAmount}
+              />
+            </motion.div>
+          ))}
         </motion.div>
-      ))}
-    </motion.div>
+      )}
+    </div>
   )
 }

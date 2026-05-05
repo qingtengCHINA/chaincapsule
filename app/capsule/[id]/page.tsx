@@ -6,13 +6,16 @@ import { useAccount } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatEther } from 'viem'
 import { usePublicClient } from 'wagmi'
-import { Coin, ArrowLeft, Wallet, Clock, CheckCircle } from '@phosphor-icons/react'
+import { Coin, ArrowLeft, Wallet, Clock, CheckCircle, LinkSimple, ArrowSquareOut } from '@phosphor-icons/react'
 import Link from 'next/link'
+import { useChainId } from 'wagmi'
+import { getContractAddress } from '@/lib/contracts/addresses'
 import { useCapsule, useBlocksUntilUnlock, useOpenCapsule, useWithdrawBnb, useReclaimBnb, useReclaimBlock } from '@/lib/contracts/hooks'
 import { truncateAddress } from '@/lib/utils/format'
 import CapsuleTimeline from '@/components/capsule/CapsuleTimeline'
 import OpenAnimation from '@/components/capsule/OpenAnimation'
 import CapsuleComments from '@/components/capsule/CapsuleComments'
+import CapsuleLike from '@/components/capsule/CapsuleLike'
 
 const SPRING = { type: 'spring' as const, stiffness: 100, damping: 20 }
 
@@ -79,6 +82,8 @@ export default function CapsulePage() {
   const [contentError, setContentError] = useState<string | null>(null)
   const [createdAtTimestamp, setCreatedAtTimestamp] = useState<number>(0)
   const [withdrawnAtTimestamp, setWithdrawnAtTimestamp] = useState<number>(0)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const chainId = useChainId()
   const publicClient = usePublicClient()
 
   const isOpened = capsule ? capsule.isOpened : false
@@ -90,6 +95,7 @@ export default function CapsulePage() {
   const creator = capsule ? capsule.creator : ''
   const isCreator = currentAddress && creator && currentAddress.toLowerCase() === creator.toLowerCase()
   const hasBnb = bnbAmount > BigInt(0)
+  const contractAddress = getContractAddress(chainId)
 
   // Fetch block timestamp for createdAt (createdAt is a block number, not a timestamp)
   useEffect(() => {
@@ -227,6 +233,20 @@ export default function CapsulePage() {
           <p className="text-sm text-zinc-600 font-mono">
             {truncateAddress(creator)}
           </p>
+          <div className="flex items-center gap-3 mt-2">
+            <CapsuleLike capsuleId={Number(capsuleId)} />
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href)
+                setLinkCopied(true)
+                setTimeout(() => setLinkCopied(false), 2000)
+              }}
+              className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              {linkCopied ? <CheckCircle size={14} className="text-emerald-500" /> : <LinkSimple size={14} />}
+              {linkCopied ? '已复制' : '分享链接'}
+            </button>
+          </div>
         </div>
 
         {/* Info card */}
@@ -432,6 +452,19 @@ export default function CapsulePage() {
 
         {/* Comments */}
         <CapsuleComments capsuleId={Number(capsuleId)} />
+        {contractAddress && (
+          <div className="mt-8 pt-6 border-t border-zinc-800/40">
+            <a
+              href={`https://testnet.bscscan.com/address/${contractAddress}#events`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              <ArrowSquareOut size={14} />
+              在 BSCScan 上查看交易历史
+            </a>
+          </div>
+        )}
       </motion.div>
     </main>
   )

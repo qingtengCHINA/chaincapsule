@@ -1,8 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Coin } from '@phosphor-icons/react'
+import { Coin, Heart } from '@phosphor-icons/react'
 
 interface CapsuleCardProps {
   id: number
@@ -40,6 +41,14 @@ export default function CapsuleCard({
   bnbAmount,
 }: CapsuleCardProps) {
   const bnbValue = bnbAmount ? parseFloat(bnbAmount) : 0
+  const [likeCount, setLikeCount] = useState(0)
+
+  useEffect(() => {
+    fetch(`/api/likes?capsuleId=${id}`)
+      .then(res => res.json())
+      .then(data => setLikeCount(data.likes || 0))
+      .catch(() => {})
+  }, [id])
 
   return (
     <motion.div
@@ -88,11 +97,21 @@ export default function CapsuleCard({
               : contentPreview || '加密内容'}
           </p>
 
-          {/* Footer: BNB amount */}
-          {bnbValue > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-              <Coin size={14} weight="fill" className="text-zinc-600" />
-              <span className="font-mono">{bnbValue.toFixed(4)} BNB</span>
+          {/* Footer: BNB amount + like count */}
+          {(bnbValue > 0 || likeCount > 0) && (
+            <div className="flex items-center justify-between">
+              {bnbValue > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  <Coin size={14} weight="fill" className="text-zinc-600" />
+                  <span className="font-mono">{bnbValue.toFixed(4)} BNB</span>
+                </div>
+              )}
+              {likeCount > 0 && (
+                <div className="flex items-center gap-1 text-xs text-zinc-500">
+                  <Heart size={12} weight="fill" className="text-zinc-600" />
+                  <span className="font-mono">{likeCount}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

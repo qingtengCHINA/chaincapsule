@@ -322,6 +322,12 @@ export default function CapsuleForm() {
 
       {/* Submit */}
       <div className="flex flex-col gap-3">
+        {/* Gas estimate */}
+        <div className="flex items-center justify-between text-[11px] text-zinc-600 px-1">
+          <span>预估 Gas 费用</span>
+          <span className="font-mono">~0.001 BNB</span>
+        </div>
+
         {displayError && (
           <p className="text-sm text-red-400">{displayError}</p>
         )}
