@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createPublicClient, http, parseAbiItem } from 'viem'
 import { bscTestnet } from 'viem/chains'
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET as `0x${string}`
+const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || '').trim() as `0x${string}`
 
 const client = createPublicClient({
   chain: bscTestnet,
