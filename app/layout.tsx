@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import WalletProvider from "@/components/wallet/WalletProvider";
+import { I18nProvider } from "@/lib/i18n/context";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
@@ -78,15 +79,17 @@ export default function RootLayout({
         style={{ fontFamily: 'var(--font-cn), var(--font-en), system-ui, sans-serif' }}
       >
         <SpeedInsights />
-        <WalletProvider>
-          <Navbar />
-          <div className="pt-14">
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
-          </div>
-          <Footer />
-        </WalletProvider>
+        <I18nProvider>
+          <WalletProvider>
+            <Navbar />
+            <div className="pt-14">
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+            </div>
+            <Footer />
+          </WalletProvider>
+        </I18nProvider>
       </body>
     </html>
   );

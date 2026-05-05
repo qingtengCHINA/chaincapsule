@@ -4,15 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import ConnectButton from '@/components/wallet/ConnectButton'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import { motion, AnimatePresence } from 'framer-motion'
 import { List, X } from '@phosphor-icons/react'
-
-const links = [
-  { href: '/', label: '首页' },
-  { href: '/create', label: '创建' },
-  { href: '/plaza', label: '广场' },
-  { href: '/profile', label: '我的' },
-]
+import { useI18n } from '@/lib/i18n/context'
 
 function GitHubIcon() {
   return (
@@ -22,9 +17,25 @@ function GitHubIcon() {
   )
 }
 
+function WhitepaperIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+    </svg>
+  )
+}
+
 export default function Navbar() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { t } = useI18n()
+
+  const links = [
+    { href: '/', label: t('nav.home') },
+    { href: '/create', label: t('nav.create') },
+    { href: '/plaza', label: t('nav.plaza') },
+    { href: '/profile', label: t('nav.profile') },
+  ]
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.04] bg-[#060608]/80 backdrop-blur-xl">
@@ -65,8 +76,17 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Right: GitHub + Connect + Mobile menu */}
-        <div className="flex items-center gap-2">
+        {/* Right: Language + Whitepaper + GitHub + Connect + Mobile menu */}
+        <div className="flex items-center gap-1">
+          <LanguageSwitcher />
+          <a
+            href="/whitepaper"
+            className="hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] transition-colors"
+            title="Whitepaper"
+          >
+            <WhitepaperIcon />
+            <span className="hidden lg:inline">{t('nav.whitepaper')}</span>
+          </a>
           <a
             href="https://github.com/qingtengCHINA/chaincapsule"
             target="_blank"
@@ -75,7 +95,7 @@ export default function Navbar() {
             title="Open Source · View on GitHub"
           >
             <GitHubIcon />
-            <span className="hidden lg:inline">Open Source</span>
+            <span className="hidden lg:inline">{t('nav.github')}</span>
           </a>
           <ConnectButton />
 
@@ -122,6 +142,14 @@ export default function Navbar() {
                   </Link>
                 )
               })}
+              <a
+                href="/whitepaper"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03] transition-colors"
+              >
+                <WhitepaperIcon />
+                {t('nav.whitepaper')}
+              </a>
               <a
                 href="https://github.com/qingtengCHINA/chaincapsule"
                 target="_blank"
