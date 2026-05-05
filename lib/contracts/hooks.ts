@@ -6,7 +6,7 @@ import { useChainId } from 'wagmi'
 
 
 // For read operations: fallback to BSC mainnet when wallet not connected
-function getReadContractAddress(chainId: number): \`0x\${string}\` | undefined {
+function getReadContractAddress(chainId: number): `0x${string}` | undefined {
   // First try the connected chain
   const addr = getContractAddress(chainId)
   if (addr) return addr
