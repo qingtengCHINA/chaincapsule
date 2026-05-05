@@ -122,6 +122,11 @@ function CapsuleRow({ capsuleId, tab }: CapsuleRowProps) {
             <span className="text-sm font-mono text-zinc-500 group-hover:text-zinc-300 transition-colors">
               #{capsuleId.toString()}
             </span>
+            {capsule.title && (
+              <span className="text-sm text-zinc-300 truncate max-w-[200px]">
+                {capsule.title}
+              </span>
+            )}
             <span className={`text-xs px-2.5 py-1 rounded-full border ${statusColor}`}>
               {statusLabel}
             </span>
