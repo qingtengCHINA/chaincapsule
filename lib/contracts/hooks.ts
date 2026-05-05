@@ -4,6 +4,16 @@ import { getContractAddress } from './addresses'
 import { CHAIN_CAPSULE_ABI } from './abi'
 import { useChainId } from 'wagmi'
 
+
+// For read operations: fallback to BSC mainnet when wallet not connected
+function getReadContractAddress(chainId: number): \`0x\${string}\` | undefined {
+  // First try the connected chain
+  const addr = getContractAddress(chainId)
+  if (addr) return addr
+  // Fallback to BSC mainnet for reading (when wallet is disconnected or on wrong chain)
+  return getContractAddress(56)
+}
+
 export function useCreateCapsule() {
   const chainId = useChainId()
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract()
@@ -147,7 +157,7 @@ export function useReclaimBnb() {
 
 export function useCapsule(id: bigint) {
   const chainId = useChainId()
-  const address = getContractAddress(chainId)
+  const address = getReadContractAddress(chainId)
   return useReadContract({
     address,
     abi: CHAIN_CAPSULE_ABI,
@@ -159,7 +169,7 @@ export function useCapsule(id: bigint) {
 
 export function useBlocksUntilUnlock(id: bigint) {
   const chainId = useChainId()
-  const address = getContractAddress(chainId)
+  const address = getReadContractAddress(chainId)
   return useReadContract({
     address,
     abi: CHAIN_CAPSULE_ABI,
@@ -171,7 +181,7 @@ export function useBlocksUntilUnlock(id: bigint) {
 
 export function useReclaimBlock(id: bigint) {
   const chainId = useChainId()
-  const address = getContractAddress(chainId)
+  const address = getReadContractAddress(chainId)
   return useReadContract({
     address,
     abi: CHAIN_CAPSULE_ABI,
