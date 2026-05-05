@@ -111,6 +111,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.recipientDesc': '别人指定你为领取人，你也可以打开这些胶囊并领取 BNB',
     'profile.faq': '常见问题',
     'profile.block': '区块',
+
+    // FAQ
+    'faq.q1': '网站没了，我的 BNB 还能取出来吗？',
+    'faq.a1': '能。合约部署在 BNB Smart Chain 区块链上，跟网站完全独立。网站只是个"遥控器"，合约才是"保险箱"。你可以直接去 BSCScan 操作：打开 bscscan.com → 搜索合约地址 → Contract → Write Contract → 连接钱包 → 调用 withdrawBnb(id) 或 reclaimBnb(id)。',
+    'faq.q2': '合约地址在哪？',
+    'faq.a2': 'BSC Mainnet: 0x2D54a05f9DADdd6BC6F1616BE40F990684B3229c。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。',
+    'faq.q3': '胶囊 ID 是什么？是密码吗？',
+    'faq.a3': '不是密码。胶囊 ID 是链上的编号（1, 2, 3...），用于定位你的胶囊。任何人都能用 ID 查看公开胶囊的信息，但只有你的钱包签名才能开胶囊和提 BNB。安全靠的是你的钱包私钥，不是 ID。',
+    'faq.q4': '创建胶囊后要注意什么？',
+    'faq.a4': '请务必记下你的胶囊 ID（创建成功后会显示）。虽然你的钱包地址关联了所有胶囊，但直接通过 BSCScan 操作时需要输入 ID。建议截图保存或记在本地。',
+    'faq.q5': 'BNB 附加功能安全吗？',
+    'faq.a5': '合约使用了 OpenZeppelin 的 ReentrancyGuard 防重入攻击，withdrawBnb 和 reclaimBnb 都有 nonReentrant 保护。BNB 锁在合约里，只有创建者或指定接收人能提取。如果长期无人提取（约 365 天），创建者可以回收。合约源码开源，可在 GitHub 和 BSCScan 上审查。',
+    'faq.q6': '合约经过审计了吗？',
+    'faq.a6': '目前合约使用了 OpenZeppelin 标准库（Ownable, ReentrancyGuard, Pausable），有 20 个单元测试覆盖。合约源码开源在 GitHub，并已在 BSCScan 上验证。对于小额使用已经足够安全。未来如果项目规模增大，会考虑专业审计。',
   },
   en: {
     'nav.home': 'Home',
@@ -199,6 +213,19 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.recipientDesc': 'Others designated you as recipient — open and claim BNB',
     'profile.faq': 'FAQ',
     'profile.block': 'Block',
+
+    'faq.q1': 'If the website goes down, can I still get my BNB?',
+    'faq.a1': 'Yes. The contract lives on BNB Smart Chain independently — the website is just a "remote control", the contract is the "safe". Go to bscscan.com → search the contract address → Contract → Write Contract → connect wallet → call withdrawBnb(id) or reclaimBnb(id).',
+    'faq.q2': 'Where is the contract address?',
+    'faq.a2': 'BSC Mainnet: 0x2D54a05f9DADdd6BC6F1616BE40F990684B3229c. This address is permanent on-chain. View all transactions on BSCScan.',
+    'faq.q3': 'What is the capsule ID? Is it a password?',
+    'faq.a3': 'No. The capsule ID is an on-chain number (1, 2, 3...) to locate your capsule. Anyone can view public capsules by ID, but only your wallet signature can open capsules and withdraw BNB. Security comes from your wallet private key, not the ID.',
+    'faq.q4': 'What should I note after creating a capsule?',
+    'faq.a4': 'Save your capsule ID (shown after creation). Your wallet links all your capsules, but you need the ID for direct BSCScan operations. Take a screenshot or save it locally.',
+    'faq.q5': 'Is the BNB attachment feature safe?',
+    'faq.a5': 'The contract uses OpenZeppelin ReentrancyGuard. BNB is locked in the contract — only the creator or designated recipient can withdraw. After ~365 days of inactivity, the creator can reclaim. Source code is open on GitHub and verified on BSCScan.',
+    'faq.q6': 'Has the contract been audited?',
+    'faq.a6': 'The contract uses OpenZeppelin standard libraries (Ownable, ReentrancyGuard, Pausable) with 20 unit tests. Source code is open on GitHub and verified on BSCScan. Sufficient for small amounts. Professional audit planned for larger scale.',
   },
 
   ja: {

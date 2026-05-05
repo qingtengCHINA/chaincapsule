@@ -11,7 +11,6 @@ import ConnectButton from '@/components/wallet/ConnectButton'
 import { useI18n } from '@/lib/i18n/context'
 
 const SPRING = { type: 'spring' as const, stiffness: 300, damping: 30 }
-const CONTRACT_ADDRESS_TESTNET = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || ''
 
 type TabKey = 'all' | 'locked' | 'unlocked'
 
@@ -174,22 +173,15 @@ function FilteredList({ ids, tab }: { ids: readonly bigint[]; tab: TabKey }) {
 }
 
 function FAQSection() {
-  const { t, locale } = useI18n()
+  const { t } = useI18n()
 
-  const FAQ_ITEMS = locale === 'zh' ? [
-    { q: '网站没了，我的 BNB 还能取出来吗？', a: `能。合约部署在 BNB Smart Chain 区块链上，跟网站完全独立。网站只是个"遥控器"，合约才是"保险箱"。你可以直接去 BSCScan 操作：打开 testnet.bscscan.com → 搜索合约地址 → Contract → Write Contract → 连接钱包 → 调用 withdrawBnb(id) 或 reclaimBnb(id)。` },
-    { q: '合约地址在哪？', a: `BSC Testnet: ${CONTRACT_ADDRESS_TESTNET || '未部署'}。这个地址就是合约在链上的"门牌号"，永久存在，不会消失。你可以在 BSCScan 上查看所有交易记录。` },
-    { q: '胶囊 ID 是什么？是密码吗？', a: '不是密码。胶囊 ID 是链上的编号（1, 2, 3...），用于定位你的胶囊。任何人都能用 ID 查看公开胶囊的信息，但只有你的钱包签名才能开胶囊和提 BNB。安全靠的是你的钱包私钥，不是 ID。' },
-    { q: '创建胶囊后要注意什么？', a: '请务必记下你的胶囊 ID（创建成功后会显示）。虽然你的钱包地址关联了所有胶囊，但直接通过 BSCScan 操作时需要输入 ID。建议截图保存或记在本地。' },
-    { q: 'BNB 附加功能安全吗？', a: '合约使用了 OpenZeppelin 的 ReentrancyGuard 防重入攻击，withdrawBnb 和 reclaimBnb 都有 nonReentrant 保护。BNB 锁在合约里，只有创建者或指定接收人能提取。如果长期无人提取（约 365 天），创建者可以回收。合约源码开源，可在 GitHub 和 BSCScan 上审查。' },
-    { q: '合约经过审计了吗？', a: '目前合约使用了 OpenZeppelin 标准库（Ownable, ReentrancyGuard, Pausable），有 20 个单元测试覆盖。合约源码开源在 GitHub。对于小额使用已经足够安全。未来如果项目规模增大，会考虑专业审计。' },
-  ] : [
-    { q: 'If the website goes down, can I still get my BNB?', a: 'Yes. The contract lives on BNB Smart Chain independently. Go to testnet.bscscan.com → search the contract address → Contract → Write Contract → connect wallet → call withdrawBnb(id) or reclaimBnb(id).' },
-    { q: 'Where is the contract address?', a: `BSC Testnet: ${CONTRACT_ADDRESS_TESTNET || 'Not deployed'}. This address is permanent and viewable on BSCScan.` },
-    { q: 'What is the capsule ID? Is it a password?', a: 'No. The capsule ID is an on-chain number (1, 2, 3...) used to locate your capsule. Anyone can view public capsules by ID, but only your wallet signature can open capsules and withdraw BNB.' },
-    { q: 'What should I note after creating a capsule?', a: 'Save your capsule ID (shown after creation). Your wallet links all your capsules, but you need the ID for direct BSCScan operations.' },
-    { q: 'Is the BNB attachment feature safe?', a: 'The contract uses OpenZeppelin ReentrancyGuard. BNB is locked in the contract — only the creator or designated recipient can withdraw. After ~365 days of inactivity, the creator can reclaim. Source code is open on GitHub and BSCScan.' },
-    { q: 'Has the contract been audited?', a: 'The contract uses OpenZeppelin standard libraries with 20 unit tests. Source code is open on GitHub. Sufficient for small amounts. Professional audit planned for larger scale.' },
+  const FAQ_ITEMS = [
+    { q: t('faq.q1'), a: t('faq.a1') },
+    { q: t('faq.q2'), a: t('faq.a2') },
+    { q: t('faq.q3'), a: t('faq.a3') },
+    { q: t('faq.q4'), a: t('faq.a4') },
+    { q: t('faq.q5'), a: t('faq.a5') },
+    { q: t('faq.q6'), a: t('faq.a6') },
   ]
 
   return (

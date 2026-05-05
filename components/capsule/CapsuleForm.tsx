@@ -174,9 +174,12 @@ export default function CapsuleForm() {
     }
 
     if (!bnbDisabled) {
-      if (parseFloat(bnbAmount) < 0) {
+      const bnb = parseFloat(bnbAmount)
+      if (bnb < 0) {
         newErrors.bnbAmount = '金额不能为负数'
-      } else if (parseFloat(bnbAmount) > 1000) {
+      } else if (bnb > 0 && bnb < 0.0001) {
+        newErrors.bnbAmount = '最小金额为 0.0001 BNB'
+      } else if (bnb > 1000) {
         newErrors.bnbAmount = '金额不能超过 1000 BNB'
       }
     }
@@ -199,7 +202,7 @@ export default function CapsuleForm() {
     if (!validate()) return
 
     if (wrongNetwork) {
-      setErrors({ submit: '当前网络不支持，请切换到 BSC Testnet (Chain ID 97)' })
+      setErrors({ submit: '当前网络不支持，请切换到 BSC Mainnet (Chain ID 56) 或 Testnet (Chain ID 97)' })
       return
     }
 
@@ -314,7 +317,7 @@ export default function CapsuleForm() {
       {wrongNetwork && isConnected && (
         <div className="rounded-lg border border-red-800/40 bg-red-950/20 px-4 py-3">
           <p className="text-sm text-red-400">
-            ⚠️ 当前网络不支持。请在钱包中切换到 <strong>BSC Testnet</strong>（Chain ID 97）
+            ⚠️ 当前网络不支持。请在钱包中切换到 <strong>BSC Mainnet</strong>（Chain ID 56）或 <strong>BSC Testnet</strong>（Chain ID 97）
           </p>
         </div>
       )}
@@ -480,8 +483,8 @@ export default function CapsuleForm() {
             />
             <input
               type="number"
-              step="0.001"
-              min="0"
+              step="0.0001"
+              min="0.0001"
               max="1000"
               value={bnbAmount}
               onChange={(e) => setBnbAmount(e.target.value)}
@@ -557,7 +560,7 @@ export default function CapsuleForm() {
         {/* Gas estimate */}
         <div className="flex items-center justify-between text-[11px] text-zinc-600 px-1">
           <span>预估 Gas 费用</span>
-          <span className="font-mono">~0.001 BNB</span>
+          <span className="font-mono">~0.0001 BNB</span>
         </div>
 
         {displayError && (
