@@ -51,6 +51,16 @@ export const CHAIN_CAPSULE_ABI = [
   },
   {
     "inputs": [],
+    "name": "LockTooLong",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "LockTooShort",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NoBnbToWithdraw",
     "type": "error"
   },
@@ -305,6 +315,19 @@ export const CHAIN_CAPSULE_ABI = [
   },
   {
     "inputs": [],
+    "name": "MAX_LOCK_BLOCKS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "MAX_TITLE_LENGTH",
     "outputs": [
       {
@@ -318,7 +341,33 @@ export const CHAIN_CAPSULE_ABI = [
   },
   {
     "inputs": [],
+    "name": "MIN_LOCK_BLOCKS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "RECLAIM_DELAY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "RECLAIM_DELAY_BLOCKS",
     "outputs": [
       {
         "internalType": "uint256",
@@ -500,6 +549,25 @@ export const CHAIN_CAPSULE_ABI = [
         "type": "address"
       }
     ],
+    "name": "getUserCapsuleCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
     "name": "getUserCapsules",
     "outputs": [
       {
@@ -575,6 +643,19 @@ export const CHAIN_CAPSULE_ABI = [
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalCapsules",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

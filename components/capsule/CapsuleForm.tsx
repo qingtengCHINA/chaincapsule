@@ -235,7 +235,18 @@ export default function CapsuleForm() {
     }
   }
 
-  const displayError = errors.submit || (contractError?.message?.includes('UserRejected') ? '用户取消了交易' : contractError?.message)
+  const displayError = errors.submit || (() => {
+    if (!contractError?.message) return ''
+    const msg = contractError.message
+    if (msg.includes('UserRejected') || msg.includes('user rejected')) return '用户取消了交易'
+    if (msg.includes('LockTooShort')) return '锁定时间太短，最少 10 分钟'
+    if (msg.includes('LockTooLong')) return '锁定时间太长，最多 200 年'
+    if (msg.includes('BnbAmountTooHigh')) return 'BNB 金额超过上限 (1000 BNB)'
+    if (msg.includes('InvalidTitle')) return '标题无效'
+    if (msg.includes('InvalidUnlockBlock')) return '解锁时间必须在未来'
+    if (msg.includes('EnforcedPause')) return '合约暂停中，请稍后再试'
+    return msg.slice(0, 100)
+  })()
 
   if (isSuccess) {
     return (

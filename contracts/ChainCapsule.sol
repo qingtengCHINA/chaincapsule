@@ -5,6 +5,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
+/// @title ChainCapsule — On-chain time capsule dApp
+/// @notice Deployed on BNB Smart Chain
+/// @dev All durations are in block numbers. BSC block time ≈ 3 seconds.
 contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     // ─── Constants ────────────────────────────────────────────────
     uint256 public constant RECLAIM_DELAY = 365 days;
@@ -12,12 +15,21 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     uint256 public constant MAX_BNB_PER_CAPSULE = 1000 ether;
     uint256 public constant MAX_TITLE_LENGTH = 100;
 
+    /// @notice Minimum lock duration: 10 minutes ≈ 200 blocks on BSC
+    uint256 public constant MIN_LOCK_BLOCKS = 200;
+
+    /// @notice Maximum lock duration: 200 years ≈ 2_103_840_000 blocks on BSC
+    uint256 public constant MAX_LOCK_BLOCKS = 2_103_840_000;
+
+    /// @notice Reclaim delay in blocks: 365 days ≈ 10_512_000 blocks on BSC
+    uint256 public constant RECLAIM_DELAY_BLOCKS = 10_512_000;
+
     // ─── Structs ────────────────────────────────────────────────────
     struct Capsule {
         uint256 id;
         address creator;
-        string title;             // 公开标题（不加密）
-        string contentHash;       // IPFS CID（内容加密存储）
+        string title;             // Public title (not encrypted)
+        string contentHash;       // IPFS CID
         uint256 unlockBlock;
         uint256 createdAt;        // block number
         uint256 bnbAmount;
@@ -31,6 +43,7 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
 
     // ─── State ──────────────────────────────────────────────────────
     uint256 private _nextId = 1;
+    uint256 private _totalCapsules = 0;
     mapping(uint256 => Capsule) private _capsules;
     mapping(address => uint256[]) private _userCapsules;
 
@@ -57,6 +70,8 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     error InvalidContent();
     error InvalidTitle();
     error InvalidUnlockBlock();
+    error LockTooShort();
+    error LockTooLong();
     error BnbAmountTooHigh();
     error NoBnbToWithdraw();
     error BnbAlreadyWithdrawn();
@@ -69,11 +84,11 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     // ─── External Functions ─────────────────────────────────────────
 
     /// @notice Creates a new time-locked capsule
-    /// @param title Public title (stored on-chain, unencrypted)
+    /// @param title Public title (stored on-chain, unencrypted, max 100 chars)
     /// @param contentHash IPFS CID pointing to the encrypted content
     /// @param unlockBlock Block number at which the capsule can be opened
     /// @param isPublic Whether the capsule appears in the public plaza
-    /// @param recipient Specific address allowed to open (address(0) = anyone)
+    /// @param recipient Specific address allowed to open (address(0) = creator only)
     /// @return id The new capsule ID
     function createCapsule(
         string calldata title,
@@ -82,6 +97,7 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
         bool isPublic,
         address recipient
     ) external payable whenNotPaused returns (uint256 id) {
+        // ── Input validation ──
         if (bytes(title).length == 0 || bytes(title).length > MAX_TITLE_LENGTH) {
             revert InvalidTitle();
         }
@@ -95,7 +111,18 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
             revert BnbAmountTooHigh();
         }
 
+        // ── Lock duration validation ──
+        uint256 lockDuration = unlockBlock - block.number;
+        if (lockDuration < MIN_LOCK_BLOCKS) {
+            revert LockTooShort();
+        }
+        if (lockDuration > MAX_LOCK_BLOCKS) {
+            revert LockTooLong();
+        }
+
+        // ── Create capsule ──
         id = _nextId++;
+        _totalCapsules++;
 
         _capsules[id] = Capsule({
             id: id,
@@ -119,6 +146,7 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Opens a capsule if the unlock block has been reached.
+    /// @param id Capsule ID to open
     function openCapsule(uint256 id) external nonReentrant whenNotPaused {
         Capsule storage c = _capsules[id];
 
@@ -126,6 +154,7 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
         if (c.isOpened) revert CapsuleAlreadyOpened();
         if (block.number < c.unlockBlock) revert CapsuleNotReady();
 
+        // Only creator or designated recipient can open
         if (msg.sender != c.creator && msg.sender != c.recipient) {
             revert NotAuthorized();
         }
@@ -137,6 +166,8 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Withdraws BNB attached to a capsule (after it's opened).
+    ///         Caller must be the creator or the recipient who opened it.
+    /// @param id Capsule ID
     function withdrawBnb(uint256 id) external nonReentrant whenNotPaused {
         Capsule storage c = _capsules[id];
 
@@ -159,6 +190,8 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
     }
 
     /// @notice Creator reclaims BNB after RECLAIM_DELAY if no one opened it.
+    ///         Protects against permanently locked funds.
+    /// @param id Capsule ID
     function reclaimBnb(uint256 id) external nonReentrant whenNotPaused {
         Capsule storage c = _capsules[id];
 
@@ -167,9 +200,11 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
         if (c.bnbAmount == 0) revert NoBnbToWithdraw();
         if (c.bnbWithdrawn) revert BnbAlreadyWithdrawn();
 
+        // Must wait until unlock block has passed
         if (block.number < c.unlockBlock) revert ReclaimNotReady();
 
-        uint256 reclaimBlock = c.unlockBlock + 10_512_000;
+        // Must wait RECLAIM_DELAY after unlock block
+        uint256 reclaimBlock = c.unlockBlock + RECLAIM_DELAY_BLOCKS;
         if (block.number < reclaimBlock) revert ReclaimNotReady();
 
         c.bnbWithdrawn = true;
@@ -183,24 +218,45 @@ contract ChainCapsule is Ownable, ReentrancyGuard, Pausable {
 
     // ─── View Functions ─────────────────────────────────────────────
 
+    /// @notice Returns capsule data
+    /// @param id Capsule ID
     function getCapsule(uint256 id) external view returns (Capsule memory) {
         return _capsules[id];
     }
 
+    /// @notice Returns the total number of capsules ever created
+    function totalCapsules() external view returns (uint256) {
+        return _totalCapsules;
+    }
+
+    /// @notice Returns all capsule IDs for a user
+    /// @param user Address to query
     function getUserCapsules(address user) external view returns (uint256[] memory) {
         return _userCapsules[user];
     }
 
+    /// @notice Returns the number of capsules a user has created
+    /// @param user Address to query
+    function getUserCapsuleCount(address user) external view returns (uint256) {
+        return _userCapsules[user].length;
+    }
+
+    /// @notice Returns how many blocks remain until a capsule can be opened
+    /// @param id Capsule ID
+    /// @return Remaining blocks (0 if already past unlock)
     function getBlocksUntilUnlock(uint256 id) external view returns (uint256) {
         Capsule storage c = _capsules[id];
         if (block.number >= c.unlockBlock) return 0;
         return c.unlockBlock - block.number;
     }
 
+    /// @notice Returns the block number at which creator can reclaim BNB
+    /// @param id Capsule ID
+    /// @return Block number (0 if reclaim not applicable)
     function getReclaimBlock(uint256 id) external view returns (uint256) {
         Capsule storage c = _capsules[id];
         if (c.bnbAmount == 0 || c.bnbWithdrawn) return 0;
-        return c.unlockBlock + 10_512_000;
+        return c.unlockBlock + RECLAIM_DELAY_BLOCKS;
     }
 
     // ─── Owner Functions ────────────────────────────────────────────
