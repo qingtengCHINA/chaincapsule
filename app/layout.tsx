@@ -5,6 +5,7 @@ import WalletProvider from "@/components/wallet/WalletProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -76,6 +77,7 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${notoSansSC.variable} bg-[#060608] text-zinc-100 antialiased`}
         style={{ fontFamily: 'var(--font-cn), var(--font-en), system-ui, sans-serif' }}
       >
+        <SpeedInsights />
         <WalletProvider>
           <Navbar />
           <div className="pt-14">
