@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPublicClient, http, parseAbiItem, formatEther } from 'viem'
-import { bscTestnet } from 'viem/chains'
+import { bsc, bscTestnet } from 'viem/chains'
 
-const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || '').trim() as `0x${string}`
+const TESTNET_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_TESTNET || '').trim() as `0x${string}`
+const MAINNET_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET || '').trim() as `0x${string}`
 
-const client = createPublicClient({
+const testnetClient = createPublicClient({
   chain: bscTestnet,
   transport: http('https://bsc-testnet-rpc.publicnode.com', { timeout: 15000 }),
+})
+
+const mainnetClient = createPublicClient({
+  chain: bsc,
+  transport: http('https://bsc-dataseed.bnbchain.org', { timeout: 15000 }),
 })
 
 const capsuleCreatedEvent = parseAbiItem(
@@ -24,7 +30,6 @@ async function fetchContentPreview(cid: string): Promise<string> {
     clearTimeout(timeout)
     if (!res.ok) return ''
     const text = await res.text()
-    // Try to extract a "content" field if JSON, otherwise use raw text
     try {
       const json = JSON.parse(text)
       if (typeof json.content === 'string') {
@@ -39,35 +44,41 @@ async function fetchContentPreview(cid: string): Promise<string> {
   }
 }
 
-export async function GET(request: NextRequest) {
+interface CapsuleData {
+  id: number
+  creator: string
+  title: string
+  contentHash: string
+  unlockBlock: number
+  bnbAmount: string
+  isPublic: boolean
+  recipient: string
+  chain: 'mainnet' | 'testnet'
+}
+
+async function fetchFromChain(
+  client: ReturnType<typeof createPublicClient>,
+  address: `0x${string}`,
+  chain: 'mainnet' | 'testnet'
+): Promise<CapsuleData[]> {
+  if (!address || address === '0x0000000000000000000000000000000000000000') return []
+
   try {
-    if (!CONTRACT_ADDRESS || CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000') {
-      return NextResponse.json({ capsules: [], totalCapsules: 0 })
-    }
-
-    // Parse pagination params
-    const searchParams = request.nextUrl.searchParams
-    const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 20, 1), 50)
-    const offset = Math.max(Number(searchParams.get('offset')) || 0, 0)
-
     const currentBlock = await client.getBlockNumber()
     const fromBlock = currentBlock > BigInt(50000) ? currentBlock - BigInt(50000) : BigInt(0)
 
     const logs = await client.getLogs({
-      address: CONTRACT_ADDRESS,
+      address,
       event: capsuleCreatedEvent,
       fromBlock,
       toBlock: currentBlock,
     })
 
-    const allCapsules = []
-
+    const capsules: CapsuleData[] = []
     for (const log of logs) {
       const { id, creator, title, contentHash, unlockBlock, bnbAmount, isPublic, recipient } = log.args
-
       if (!isPublic) continue
-
-      allCapsules.push({
+      capsules.push({
         id: Number(id),
         creator: creator as string,
         title: title as string,
@@ -76,14 +87,39 @@ export async function GET(request: NextRequest) {
         bnbAmount: formatEther(bnbAmount || BigInt(0)),
         isPublic: true,
         recipient: recipient as string,
+        chain,
       })
     }
+    return capsules
+  } catch {
+    return []
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 20, 1), 50)
+    const offset = Math.max(Number(searchParams.get('offset')) || 0, 0)
+    const chainFilter = searchParams.get('chain') // 'mainnet' | 'testnet' | null (both)
+
+    // Fetch from both chains in parallel
+    const promises: Promise<CapsuleData[]>[] = []
+    if (!chainFilter || chainFilter === 'mainnet') {
+      promises.push(fetchFromChain(mainnetClient, MAINNET_ADDRESS, 'mainnet'))
+    }
+    if (!chainFilter || chainFilter === 'testnet') {
+      promises.push(fetchFromChain(testnetClient, TESTNET_ADDRESS, 'testnet'))
+    }
+
+    const results = await Promise.allSettled(promises)
+    const allCapsules = results
+      .filter((r): r is PromiseFulfilledResult<CapsuleData[]> => r.status === 'fulfilled')
+      .flatMap((r) => r.value)
 
     allCapsules.sort((a, b) => b.id - a.id)
-
     const totalCapsules = allCapsules.length
 
-    // Paginate first, then fetch previews only for the visible subset
     const paginated = allCapsules.slice(offset, offset + limit)
 
     const previewResults = await Promise.allSettled(
